@@ -27,6 +27,8 @@ public static class Program
                 await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
                 var map = (MapView)window.FindName("PlannerMap");
                 Assert(map.ActualWidth > 100 && map.Route?.Points.Count == 5, "WPF-Fenster und Karte geladen");
+                Assert(window.Background is SolidColorBrush background && background.Color == Color.FromRgb(16,18,22), "Dunkler Fensterhintergrund angewendet");
+                Assert(((ComboBox)window.FindName("RoutesBox")).Foreground is SolidColorBrush comboText && comboText.Color == Color.FromRgb(24,32,42), "Lesbarer Auswahltext");
                 Capture(window, "planner.png");
                 var name = (TextBox)window.FindName("NameBox");name.Text = "UI-Test gespeichert";
                 Click(window, "Speichern");
@@ -45,6 +47,7 @@ public static class Program
                 await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
                 var compact = app.Windows.OfType<CompactWindow>().Single();
                 Assert(compact.IsVisible && !window.IsVisible && !compact.Topmost, "Kompaktansicht, standardmäßig nicht Topmost");
+                Assert(compact.Background is SolidColorBrush compactBackground && compactBackground.Color == Color.FromRgb(16,18,22), "Dunkler Kompaktfensterhintergrund angewendet");
                 var topmost = Descendants(compact).OfType<CheckBox>().Single();
                 topmost.IsChecked = true;Assert(compact.Topmost, "Normales Topmost aktiviert");
                 topmost.IsChecked = false;Capture(compact, "compact.png");
