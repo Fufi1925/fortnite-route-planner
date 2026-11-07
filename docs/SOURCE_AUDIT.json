@@ -103,5 +103,23 @@
     ],
     "decisionDocument": "FORTNITE_GG.md",
     "integration": "Unmodified website in isolated WebView2; no dataset redistribution or local route synchronization"
+  },
+  "liveAutomationReview": {
+    "checkedUtc": "2026-11-07",
+    "decisionDocument": "LIVE_AUTOMATION_REVIEW.md",
+    "position": "Documented by Overwolf GEP; no approved host/access for this WPF app",
+    "chestOpened": "No matching documented event found in reviewed Fortnite GEP reference",
+    "remainingChests": "Unknown; visibility filters do not establish depletion",
+    "leaveRecommendation": "Unavailable with current inputs; no inferred optimal time",
+    "userProviderAccess": "User confirmed no provider access configured",
+    "sourceUrls": [
+      "https://dev.overwolf.com/ow-native/live-game-data-gep/supported-games/fortnite/",
+      "https://dev.overwolf.com/ow-native/getting-started/project-roadmap/",
+      "https://legal.overwolf.com/docs/overwolf/developers/developer-terms/",
+      "https://legal.epicgames.com/epicgames/tos",
+      "https://fortnite.gg/legal/terms",
+      "https://assets-unreal2-epic-prod-us2.s3.dualstack.us-east-1.amazonaws.com/original/4X/f/c/4/fc4342c50e1a0abf34943e019ee90bacccc62950.pdf"
+    ],
+    "ordinaryLaunch": "Optional fixed Epic protocol activation; no game-state access; actual Fortnite installation/launch not tested"
   }
 }

@@ -19,6 +19,9 @@ public static class Validation
         if (!double.IsFinite(route.Radius) || route.Radius < 0 || route.Radius > 1500)
             throw new InvalidDataException("Radius muss zwischen 0 und 1500 KE liegen.");
         if (!Enum.IsDefined(route.RadiusMode)) throw new InvalidDataException("Unbekannter Radiusmodus.");
+        if (route.VisibleKinds is null || route.VisibleKinds.Count > 4 || route.VisibleKinds.Any(k => !Enum.IsDefined(k))
+            || route.VisibleKinds.Distinct().Count() != route.VisibleKinds.Count)
+            throw new InvalidDataException("Ungültige oder doppelte Markierungsfilter.");
         if (route.Points is null || route.Points.Count > 500 || route.Points.Any(p => !Geometry.IsOnMap(p)))
             throw new InvalidDataException("Maximal 500 Wegpunkte innerhalb 0…3000 erlaubt.");
         if (route.Area is { } area && (!Geometry.IsOnMap(new(area.Left,area.Top)) || !Geometry.IsOnMap(new(area.Right,area.Bottom))
@@ -32,7 +35,7 @@ public static class Validation
     }
     public static void Library(LibraryDocument document)
     {
-        if (document.SchemaVersion != 4 || document.Routes is null || document.Maps is null || document.Activities is null
+        if (document.SchemaVersion != 5 || document.Routes is null || document.Maps is null || document.Activities is null
             || document.Routes.Count > 200 || document.Maps.Count > 100 || document.Activities.Count > 200)
             throw new InvalidDataException("Bibliothek: ungültige Version oder zu viele Einträge.");
         foreach (var route in document.Routes) Route(route);
@@ -63,6 +66,7 @@ public static class Validation
         foreach (var point in map.Spawns)
         {
             if (point is null || !Geometry.IsOnMap(point.Position)) throw new InvalidDataException("Ungültiger Ort.");
+            if (!Enum.IsDefined(point.Kind)) throw new InvalidDataException("Unbekannter Markierungstyp.");
             Text(point.Id, 80, "Orts-ID");
             if (point.Source is not null) Text(point.Source, 200, "Ortsquelle");
         }
@@ -77,7 +81,7 @@ public static class RouteJson
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase, WriteIndented = true, MaxDepth = 20,
         UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
-        Converters = { new JsonStringEnumConverter<RadiusMode>(allowIntegerValues: false) }
+        Converters = { new JsonStringEnumConverter<RadiusMode>(allowIntegerValues: false), new JsonStringEnumConverter<SpawnKind>(allowIntegerValues: false) }
     };
     public static byte[] Serialize(LibraryDocument document)
     {
@@ -94,12 +98,12 @@ public static class RouteJson
             using var json = JsonDocument.Parse(bytes, new() { MaxDepth = 20 });
             RejectDuplicateKeys(json.RootElement);
             if (!json.RootElement.TryGetProperty("schemaVersion", out var version)
-                || !version.TryGetInt32(out int schema) || schema is not (1 or 2 or 3 or 4))
+                || !version.TryGetInt32(out int schema) || schema is not (1 or 2 or 3 or 4 or 5))
                 throw new InvalidDataException("Unbekannte oder fehlende Schemaversion.");
             // Preserve old routes but never turn their simulated history into real activities.
             var node = JsonNode.Parse(bytes)!.AsObject();
             if (schema < 3) node.Remove("demoHistory");
-            if (schema < 4) node["schemaVersion"] = 4;
+            if (schema < 5) node["schemaVersion"] = 5;
             var doc = node.Deserialize<LibraryDocument>(Options)
                 ?? throw new InvalidDataException("Leere Bibliothek.");
             // Required route identity/version must come from the file, never from model defaults.
@@ -107,6 +111,7 @@ public static class RouteJson
             {
                 foreach (var field in new[] { "id", "name", "mapVersion", "radius", "radiusMode", "points" })
                     if (!r.TryGetProperty(field, out _)) throw new InvalidDataException($"Routenfeld {field} fehlt.");
+                if (schema >= 5 && !r.TryGetProperty("visibleKinds", out _)) throw new InvalidDataException("Markierungsfilter fehlen.");
                 foreach (var p in r.GetProperty("points").EnumerateArray())
                     if (!p.TryGetProperty("x", out _) || !p.TryGetProperty("y", out _))
                         throw new InvalidDataException("Wegpunkt benötigt x und y.");
@@ -120,9 +125,12 @@ public static class RouteJson
                     foreach (var field in new[] { "id", "name", "source", "spawns" })
                         if (!map.TryGetProperty(field, out _)) throw new InvalidDataException($"Kartenfeld {field} fehlt.");
                     foreach (var point in map.GetProperty("spawns").EnumerateArray())
+                    {
                         if (!point.TryGetProperty("id", out _) || !point.TryGetProperty("position", out var position)
                             || !position.TryGetProperty("x", out _) || !position.TryGetProperty("y", out _))
                             throw new InvalidDataException("Ort benötigt ID und vollständige Position.");
+                        if (schema >= 5 && !point.TryGetProperty("kind", out _)) throw new InvalidDataException("Markierungstyp fehlt.");
+                    }
                 }
             Validation.Library(doc);
             return doc;

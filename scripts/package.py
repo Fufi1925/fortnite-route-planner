@@ -18,7 +18,7 @@ for name in ("README.md", "LICENSE"):
 for name in ("docs", "third-party", "examples"):
     shutil.copytree(root / name, output / name, dirs_exist_ok=True)
 (output / "STARTEN.txt").write_text(
-    "ROUTE PLANNER 0.4.0 - LOKALE ROUTENPLANUNG\n\n"
+    "ROUTE PLANNER 0.5.0 - LOKALE ROUTENPLANUNG\n\n"
     "RoutePlanner.exe unter Windows x64 starten. Keine .NET-Installation notwendig.\n"
     "Eigene Karten und Daten, keine Fortnite-Verbindung oder Live-Erkennung.\n"
     "Fortnite.GG: WebView2 Runtime erforderlich (nicht mitgeliefert); Browser als Alternative.\n"

@@ -1,3 +1,7 @@
+# 0.5.0
+
+Gespeicherte, unabhängige lokale Filter für normale, vergrabene und seltene Kisten sowie sonstige/untypisierte Orte. Alle acht Kistenkombinationen einschließlich keiner Kiste; Typfilter gelten auch im Alle-Orte-Modus. Typ neuer eigener Markierungen auswählbar; Import erhält deklarierte Typen. Schema 5 migriert ältere Dateien ohne Kategorie-Erfindung. Eigener Routenmodus und Kompaktfenster ohne Lootpositionen. Live-Truhenerkennung, Charakterverfolgung, optimaler Leave-Zeitpunkt mangels verifizierter Schnittstelle und Appfreigabe nicht enthalten; erneute Quellenprüfung in LIVE_AUTOMATION_REVIEW.md. Optionaler normaler Epic-Startauftrag auf bewusstem Routenstart; nur feste dokumentierte URI, keine Bestätigung eines laufenden Spiels.
+
 # 0.4.0
 
 Original-Fortnite.GG in eigener, erst nach Klick geöffneter WebView2-Ansicht: farbige Karte, Chests/Buried Chests/Rare Chests und originale Zeichenwerkzeuge. Getrenntes Browserprofil, sichtbare Datenschutz-/Synchronisierungsgrenzen, Webdatenlöschung und Browser-/Runtime-Auswege. Kein Kopieren des Anbieter-Codes oder Truhendatensatzes, keine automatische Übernahme von Web-Routen. Karten im lokalen Planer und Kompaktfenster behalten neue Originalfarben; native Oberfläche weiterhin schwarz/grau. Alte Karten und Routen bleiben erhalten. Aktive Rechteckbereiche blenden auch Radiusflächen aus.

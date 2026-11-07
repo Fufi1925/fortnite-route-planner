@@ -38,8 +38,12 @@ for required in ('AreHostObjectsAllowed = false', 'IsWebMessageEnabled = false',
     if required not in browser_source:
         errors.append('browser safeguard missing: ' + required)
 links_source = (root / 'src/RoutePlanner.App/ExternalLinks.cs').read_text()
-if 'if (!FortniteGgSite.IsExternalLink(address)) throw' not in links_source:
+if 'if (!FortniteGgSite.IsExternalLink(address) && address != EpicLaunchContract.FortniteUri) throw' not in links_source:
     errors.append('external link launcher missing exact allowlist')
+launcher_source = (root / 'src/RoutePlanner.App/EpicLauncher.cs').read_text()
+for required in ('OpenSubKey("com.epicgames.launcher", writable:false)', 'ExternalLinks.Open(EpicLaunchContract.FortniteUri)'):
+    if required not in launcher_source:
+        errors.append('Epic launch boundary missing: ' + required)
 manifest = ET.parse(root / "src/RoutePlanner.App/app.manifest")
 requested = manifest.find(".//{urn:schemas-microsoft-com:asm.v3}requestedExecutionLevel")
 if requested is None or requested.attrib != {"level": "asInvoker", "uiAccess": "false"}:
@@ -51,4 +55,5 @@ print(f"PASS supplementary source review: {len(files)} application files, no fla
 print("PASS pinned Microsoft WebView2 SDK is the only explicit package; ordinary asInvoker / uiAccess=false manifest")
 print("PASS dedicated static-map HTTPS client reviewed separately; no general live-data integration")
 print("PASS isolated ordinary website view; no scripts, native bridge or certificate overrides; exact external-link allowlist")
+print("PASS optional Epic launch request uses a fixed documented URI and read-only OS protocol registration")
 print("LIMIT: source pattern checks do not establish Fortnite permission or ban safety")

@@ -19,7 +19,9 @@ public partial class MainWindow : Window
     private readonly PublicFortniteMapClient publicMapClient = new();
     private readonly CancellationTokenSource downloads = new();
     private readonly bool autoLoadPublicMap;
+    private readonly Func<GameLaunchResult> requestFortnite;
     private bool mapDownloadRunning;
+    private string launchStatus = "";
     private DateTimeOffset lastPublicRequest;
     private readonly DispatcherTimer timer = new() { Interval = TimeSpan.FromSeconds(1) };
     private LibraryDocument library = new();
@@ -34,10 +36,11 @@ public partial class MainWindow : Window
     private CompactWindow? compact;
     private WebMapWindow? webMap;
     public MainWindow() : this(null) { }
-    public MainWindow(string? dataDirectory)
+    public MainWindow(string? dataDirectory, Func<GameLaunchResult>? requestFortnite = null)
     {
         store = new(dataDirectory ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Routenatelier"));
         images = new(store.DirectoryPath);
+        this.requestFortnite = requestFortnite ?? EpicLauncher.RequestFortnite;
         autoLoadPublicMap = dataDirectory is null;
         InitializeComponent();
         try
@@ -150,7 +153,14 @@ public partial class MainWindow : Window
         PlannerMap.Editable = CanEdit(); PlannerMap.PlaceMarkers = MarkerTool.IsChecked == true;
         AllMarkers.IsEnabled = current.Area is null;
         if (current.Area is not null) AllMarkers.IsChecked = false;
-        PlannerMap.VisibleSpawns = current.Area is null && AllMarkers.IsChecked == true ? activeMap?.Spawns ?? [] : index.Query(current);
+        PlannerMap.VisibleSpawns = current.Area is null && AllMarkers.IsChecked == true
+            ? (activeMap?.Spawns ?? []).Where(p => current.VisibleKinds.Contains(p.Kind)).ToArray() : index.Query(current);
+        ShowChests.IsChecked = current.VisibleKinds.Contains(SpawnKind.Chest);
+        ShowBuriedChests.IsChecked = current.VisibleKinds.Contains(SpawnKind.BuriedChest);
+        ShowRareChests.IsChecked = current.VisibleKinds.Contains(SpawnKind.RareChest);
+        ShowOtherMarkers.IsChecked = current.VisibleKinds.Contains(SpawnKind.Other);
+        ShowChests.IsEnabled = ShowBuriedChests.IsEnabled = ShowRareChests.IsEnabled = ShowOtherMarkers.IsEnabled = session is null;
+        MarkerKindBox.IsEnabled = CanEdit();
         PlannerMap.Confirmed = (activeMap?.Spawns ?? []).Where(s => s.ManuallyConfirmed).Select(s => s.Id).ToHashSet();
         PlannerMap.VisitedPoints = session?.VisitedPoints ?? visited; PlannerMap.InvalidateVisual();
         MapVersionLabel.Text = activeMap?.Name ?? "Zugehörige Karte öffnen";
@@ -167,6 +177,7 @@ public partial class MainWindow : Window
         SelectRegionButton.IsEnabled = CanEdit();
         SelectRegionButton.Content = PlannerMap.SelectArea ? "Auf Karte ziehen …" : "Bereich auswählen";
         PublicMapButton.IsEnabled = !mapDownloadRunning && session is null;
+        LaunchFortniteBox.IsEnabled = session is null;
         RouteMetrics.Text = $"{Geometry.Length(current.Points):0} KE geplante Strecke  ·  {PlannerMap.VisibleSpawns.Count} Orte " + (current.Area is not null ? "im Bereich" : AllMarkers.IsChecked == true ? "insgesamt" : "im Radius");
         HistoryBox.ItemsSource = ActivitiesWithPending().AsEnumerable().Reverse().Select(a =>
             $"{a.RouteName}   ·   {a.StartedAt.ToLocalTime():dd.MM.yyyy HH:mm}   ·   {a.DurationSeconds/60:00}:{a.DurationSeconds%60:00} min   ·   {a.VisitedPoints}/{a.TotalPoints} manuell bestätigt   ·   {(a.Completed ? "abgeschlossen" : "beendet")}").ToArray();
@@ -180,13 +191,14 @@ public partial class MainWindow : Window
     {
         string progress = session is null ? "" : $"{session.VisitedPoints}/{session.TotalPoints} bestätigt  ·  {session.ElapsedSeconds/60:00}:{session.ElapsedSeconds%60:00}";
         SessionStatus.Text = progress;
-        compact?.UpdateRoute(current, activeMap?.Id ?? MapSpace.WorkspaceId, activeImage, PlannerMap.VisibleSpawns,
-            PlannerMap.Confirmed, session?.VisitedPoints ?? visited, session is not null, progress,activeMap?.IsPublicFortniteMap == true);
+        compact?.UpdateRoute(current, activeMap?.Id ?? MapSpace.WorkspaceId, activeImage,
+            session?.VisitedPoints ?? visited, session is not null, progress,activeMap?.IsPublicFortniteMap == true,launchStatus);
     }
     private bool CanEdit() => session is null && activeMap is not null && !MapSpace.IsLegacyExample(current);
     private void SwitchTo(RoutePlan route, bool unsaved)
     {
         current = route; dirty = unsaved; visited = 0; PlannerMap.SelectedPoint = -1; PlannerMap.SelectArea = false;
+        launchStatus = "";
         LoadActiveMap(); PlannerMap.Fit(); Refresh();
         if (activeMap is null) Status("Die passende Karte fehlt. Route bleibt gespeichert und exportierbar; öffne ihr Kartenbild zum Bearbeiten.");
     }
@@ -313,8 +325,9 @@ public partial class MainWindow : Window
     public void AddManualMarker(MapPoint point)
     {
         if (!CanEdit() || activeMap is null || !Geometry.IsOnMap(point)) return;
-        if (Run(() => UpdateMap(activeMap with { Spawns = activeMap.Spawns.Append(new SpawnPoint(Guid.NewGuid().ToString("N"),point,true,"Eigene Eingabe")).ToList() })))
-            Status("Eigener Ort gespeichert · keine automatische Erkennung");
+        var kind = (SpawnKind)MarkerKindBox.SelectedIndex;
+        if (Run(() => UpdateMap(activeMap with { Spawns = activeMap.Spawns.Append(new SpawnPoint(Guid.NewGuid().ToString("N"),point,true,"Eigene Eingabe",kind)).ToList() })))
+            Status("Eigene Markierung gespeichert · keine automatische Erkennung");
     }
     private void ToggleMarker(string id)
     {
@@ -332,13 +345,30 @@ public partial class MainWindow : Window
         var data = RouteJson.Parse(RouteJson.ReadBounded(path));
         if (data.Routes.Count != 0 || data.Activities.Count != 0 || data.Maps.Count != 1 || data.Maps[0].Id != activeMap.Id)
             throw new InvalidDataException("Ortsdatei benötigt genau die aktuelle Kartenkennung, ohne Routen oder Verlauf.");
-        var points = data.Maps[0].Spawns.Select(p => new SpawnPoint(Guid.NewGuid().ToString("N"),p.Position,false,data.Maps[0].Source)).ToList();
+        var points = data.Maps[0].Spawns.Select(p => new SpawnPoint(Guid.NewGuid().ToString("N"),p.Position,false,data.Maps[0].Source,p.Kind)).ToList();
         UpdateMap(activeMap with { Spawns = activeMap.Spawns.Concat(points).ToList() });
         Status($"{points.Count} statische Orte importiert · Quelle: {data.Maps[0].Source}");
     }
     private void ChangeMarkerTool(object sender, RoutedEventArgs e)
     { if (ready && !updating) { if (MarkerTool.IsChecked == true) { PlannerMap.SelectArea = false; if (current.Area is null) AllMarkers.IsChecked = true; } Refresh(); } }
     private void ChangeAllMarkers(object sender, RoutedEventArgs e) { if (ready && !updating) Refresh(); }
+    private void ChangeKindFilter(object sender,RoutedEventArgs e)
+    {
+        if (!ready || updating || session is not null) return;
+        current.VisibleKinds = [];
+        if (ShowChests.IsChecked == true) current.VisibleKinds.Add(SpawnKind.Chest);
+        if (ShowBuriedChests.IsChecked == true) current.VisibleKinds.Add(SpawnKind.BuriedChest);
+        if (ShowRareChests.IsChecked == true) current.VisibleKinds.Add(SpawnKind.RareChest);
+        if (ShowOtherMarkers.IsChecked == true) current.VisibleKinds.Add(SpawnKind.Other);
+        dirty = true; Refresh();
+        Status("Markierungsfilter geändert · ausgeblendet bedeutet nicht leer oder geöffnet");
+    }
+    private void SelectRouteTool(object sender,RoutedEventArgs e)
+    {
+        if (!CanEdit()) return;
+        PlannerMap.SelectArea = false; MarkerTool.IsChecked = false; Refresh();
+        Status("Route zeichnen: per Klick Wegpunkte setzen, Punkte ziehen und rechts ihre Reihenfolge bearbeiten");
+    }
     private void SelectRegion(object sender,RoutedEventArgs e)
     {
         if (!CanEdit()) return;
@@ -399,7 +429,16 @@ public partial class MainWindow : Window
     {
         if (session is not null) { OpenCompact(sender,e); return; }
         if (!CanEdit() || current.Points.Count == 0 || !TrySave()) return;
+        GameLaunchResult? launch = null;
+        launchStatus = "";
+        if (LaunchFortniteBox.IsChecked == true)
+        {
+            launch = requestFortnite();
+            if (!launch.Requested) { Status(launch.Message); return; }
+            launchStatus = launch.Message;
+        }
         session = new(current); visited = 0; timer.Start(); Refresh(); OpenCompact(sender,e);
+        if (launch is not null) Status(launch.Message);
     }
     private void AdvanceSession()
     {

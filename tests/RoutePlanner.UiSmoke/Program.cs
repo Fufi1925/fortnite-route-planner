@@ -19,6 +19,8 @@ public static class Program
     {
         int exitCode = 1;
         string temp = Path.Combine(Path.GetTempPath(),"route-ui-"+Guid.NewGuid());
+        int launchRequests = 0; bool acceptLaunchRequest = false;
+        GameLaunchResult RequestGameForTest() { launchRequests++;return new(acceptLaunchRequest,acceptLaunchRequest ? "Epic-Start angefragt · Test zählt nur den Aufruf, startet kein Spiel" : "Epic-Start fehlgeschlagen · Testfall"); }
         var app = new RoutePlanner.App.App(); app.InitializeComponent(); app.OpenPlannerOnStartup = false;
         app.ShutdownMode = ShutdownMode.OnExplicitShutdown;
         app.Dispatcher.BeginInvoke(async () =>
@@ -27,7 +29,7 @@ public static class Program
             try
             {
                 var store = new LocalStore(temp);
-                window = new MainWindow(temp); window.Show();
+                window = new MainWindow(temp,RequestGameForTest); window.Show();
                 await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
                 // Request a common desktop size; Windows may cap it to the runner's screen limits.
                 window.Width = 1440; window.Height = 920; window.UpdateLayout();
@@ -54,9 +56,10 @@ public static class Program
                 window.AddManualMarker(new(910,1890));
                 Assert(store.Load().Maps.Single().Spawns.Single().ManuallyConfirmed,"Eigener Ort dauerhaft gespeichert");
                 var markerFile = Path.Combine(temp,"markers.json");
-                RouteJson.WriteAtomic(markerFile,RouteJson.Serialize(new(){Maps=[new(){Source="Eigene vermessene Koordinaten",Spawns=[new("p",new(1700,960))]}]}));
+                RouteJson.WriteAtomic(markerFile,RouteJson.Serialize(new(){Maps=[new(){Source="Eigene vermessene Koordinaten",Spawns=[new("p",new(1700,960),Kind:SpawnKind.BuriedChest)]}]}));
                 window.ImportMarkerFile(markerFile);
                 Assert(store.Load().Maps.Single().Spawns.Count == 2 && store.Load().Maps.Single().Spawns.Last().Source == "Eigene vermessene Koordinaten","Ortsimport und Quellenangabe gespeichert");
+                Assert(store.Load().Maps.Single().Spawns.Last().Kind==SpawnKind.BuriedChest,"Ortsimport erhält den ausdrücklich deklarierten Kistentyp");
                 var radius = (Slider)window.FindName("RadiusSlider"); radius.Value = 0;
                 Assert(map.VisibleSpawns.Count == 0,"Radiusfilter blendet außerhalb liegende Orte aus");
                 radius.Value = 110;Click(window,"Speichern");
@@ -84,7 +87,7 @@ public static class Program
                 Assert(HasColor(colorImport.Image) && HasColor(new MapImages(temp).Load(colorImport.Asset)),"Farbige Karte bleibt beim Import, Speichern und Laden farbig");
                 var invalid = Path.Combine(temp,"not-image.png");File.WriteAllText(invalid,"not an image at all");
                 Reject(()=>new MapImages(temp).Import(invalid));WriteImage(invalid,128,64);Reject(()=>new MapImages(temp).Import(invalid));
-                window.Close();window = new MainWindow(temp);window.Show();
+                window.Close();window = new MainWindow(temp,RequestGameForTest);window.Show();
                 await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
                 window.Width = 1440;window.Height = 920;window.UpdateLayout();
                 routes = (ComboBox)window.FindName("RoutesBox");
@@ -97,9 +100,11 @@ public static class Program
                 map.ZoomBy(1.2);map.Fit();
                 await Capture(window,"planner-reloaded.png");
                 Click(window,"Route starten  →");
+                Assert(launchRequests==0,"Ohne ausgewählte Startoption kein Epic-Startauftrag");
                 await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
                 var compact = app.Windows.OfType<CompactWindow>().Single();
                 Assert(compact.IsVisible && !window.IsVisible && !compact.Topmost,"Kompaktfenster und sichere Standardeinstellung");
+                Assert(((MapView)compact.FindName("CompactMap")).VisibleSpawns.Count==0,"Kompaktfenster zeigt keine Truhen- oder Lootpositionen");
                 Assert(((SolidColorBrush)compact.Background).Color == Color.FromRgb(8,8,8),"Schwarzer Kompaktfensterhintergrund");
                 var pin = Descendants(compact).OfType<CheckBox>().Single();pin.IsChecked = true;Assert(compact.Topmost,"Normales Topmost");pin.IsChecked = false;
                 await Task.Delay(1200);
@@ -112,6 +117,41 @@ public static class Program
                 Click(window,"Verlauf öffnen");await Capture(window,"history.png");Click(window,"← Zur Planung");
                 Click(window,"+ Neue Route");Click(window,"Speichern");
                 Assert(((MapView)window.FindName("PlannerMap")).Route!.Points.Count == 0,"Leere eigene Route nutzbar");
+                var kindBox=(ComboBox)window.FindName("MarkerKindBox");
+                for(int kind=1;kind<=3;kind++){kindBox.SelectedIndex=kind;window.AddManualMarker(new(400+kind*50,400));}
+                window.SetSearchArea(new(400,350,600,450));Click(window,"Speichern");
+                var chestFilter=(CheckBox)window.FindName("ShowChests");
+                var buriedFilter=(CheckBox)window.FindName("ShowBuriedChests");
+                var rareFilter=(CheckBox)window.FindName("ShowRareChests");
+                ((CheckBox)window.FindName("ShowOtherMarkers")).IsChecked=false;
+                for(int mask=0;mask<8;mask++)
+                {
+                    chestFilter.IsChecked=(mask&1)!=0;buriedFilter.IsChecked=(mask&2)!=0;rareFilter.IsChecked=(mask&4)!=0;
+                    Assert(map.VisibleSpawns.Count==System.Numerics.BitOperations.PopCount((uint)mask),"Lokale Kistenfilter bedienen Kombination "+mask);
+                }
+                chestFilter.IsChecked=false;buriedFilter.IsChecked=true;rareFilter.IsChecked=false;Click(window,"Speichern");
+                var filterRouteId=map.Route!.Id;
+                Assert(store.Load().Routes.Single(r=>r.Id==filterRouteId).VisibleKinds.SequenceEqual(new[]{SpawnKind.BuriedChest}),"Filterauswahl tatsächlich gespeichert");
+                Assert(map.VisibleSpawns.Single().Kind==SpawnKind.BuriedChest,"Eigene Markierungstypen statt umgedeuteter Punkte");
+                await Capture(window,"local-chest-filters.png");
+                Click(window,"Laden");
+                Assert(((CheckBox)window.FindName("ShowBuriedChests")).IsChecked==true&&((CheckBox)window.FindName("ShowChests")).IsChecked==false,"Lokale Filter nach Laden wiederhergestellt");
+                ((Button)window.FindName("ClearRegionButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                ((CheckBox)window.FindName("AllMarkers")).IsChecked=true;
+                Assert(map.VisibleSpawns.Count==2&&map.VisibleSpawns.All(p=>p.Kind==SpawnKind.BuriedChest),"Alle-Orte-Modus berücksichtigt weiterhin Kistentypfilter");
+                Click(window,"Speichern");
+                Click(window,"Route zeichnen");Assert(!map.SelectArea&&!map.PlaceMarkers,"Eigener Routenmodus kehrt aus Bereichs- und Markierungswerkzeugen zurück");
+                ((TextBox)window.FindName("PointX")).Text="500";((TextBox)window.FindName("PointY")).Text="400";Click(window,"Punkt hinzufügen");Click(window,"Speichern");
+                var launchOption=(CheckBox)window.FindName("LaunchFortniteBox");launchOption.IsChecked=true;
+                Click(window,"Route starten  →");
+                Assert(launchRequests==1&&!app.Windows.OfType<CompactWindow>().Any()&&window.IsVisible,"Fehlgeschlagener Epic-Start startet keinen Routengang");
+                acceptLaunchRequest=true;Click(window,"Route starten  →");
+                await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+                compact=app.Windows.OfType<CompactWindow>().Single();
+                Assert(launchRequests==2&&compact.IsVisible,"Ausgewählte Epic-Startoption sendet genau einen Auftrag vor dem lokalen Routengang");
+                Assert(((TextBlock)compact.FindName("EpicStatus")).Text.StartsWith("Epic-Start angefragt"),"Kompaktfenster bestätigt nur den Startauftrag und behauptet kein laufendes Spiel");
+                Assert(Descendants(compact).OfType<TextBlock>().Any(t=>t.Text.Contains("Leave-Zeitpunkt unbekannt")),"Fehlende Truhenerkennung und Leave-Zeit sichtbar ohne erfundene Empfehlung");
+                Click(compact,"Beenden");Click(compact,"Zur Planung");launchOption.IsChecked=false;
                 if(Environment.GetEnvironmentVariable("ROUTE_VERIFY_PUBLIC_MAP")=="1")
                 {
                     bool loaded=await window.LoadPublicMapAsync(showErrors:false);

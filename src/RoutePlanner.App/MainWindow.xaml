@@ -44,11 +44,19 @@
         <Button Content="Speichern" Click="SaveRoute" Style="{StaticResource PrimaryButton}" FontSize="12" Padding="5,8" AutomationProperties.AutomationId="SaveRoute"/><Button Grid.Column="2" Content="Laden" Click="ReloadRoute" FontSize="12" Padding="5,8"/>
        </Grid>
        <Separator/>
+       <TextBlock Text="MARKIERUNGEN FILTERN" FontSize="10" Foreground="#858585" FontWeight="SemiBold" Margin="0,0,0,10"/>
+       <CheckBox x:Name="ShowChests" Content="Kisten" IsChecked="True" Checked="ChangeKindFilter" Unchecked="ChangeKindFilter" FontSize="11"/>
+       <CheckBox x:Name="ShowBuriedChests" Content="Vergrabene Kisten" IsChecked="True" Checked="ChangeKindFilter" Unchecked="ChangeKindFilter" FontSize="11" Margin="0,9,0,0"/>
+       <CheckBox x:Name="ShowRareChests" Content="Seltene Kisten · Rare Chests" IsChecked="True" Checked="ChangeKindFilter" Unchecked="ChangeKindFilter" FontSize="11" Margin="0,9,0,0"/>
+       <CheckBox x:Name="ShowOtherMarkers" Content="Sonstige / untypisierte Orte" IsChecked="True" Checked="ChangeKindFilter" Unchecked="ChangeKindFilter" FontSize="11" Margin="0,9,0,0"/>
+       <TextBlock Text="Eigene/importierte Punkte. Ausblenden sagt nichts über verbleibende Truhen aus." FontSize="10" Foreground="#777777" TextWrapping="Wrap" Margin="0,9,0,0"/>
+       <Separator/>
        <DockPanel><TextBlock x:Name="RadiusLabel" DockPanel.Dock="Right" Foreground="#DADADA" FontSize="11"/><TextBlock Text="SUCHRADIUS" FontSize="10" Foreground="#858585" FontWeight="SemiBold"/></DockPanel>
        <Slider x:Name="RadiusSlider" Minimum="0" Maximum="1500" ValueChanged="ChangeRadius" Margin="0,10,0,5" AutomationProperties.Name="Suchradius"/>
        <ComboBox x:Name="ModeBox" SelectedIndex="0" SelectionChanged="ChangeMode" FontSize="11"><ComboBoxItem Content="Entlang der Strecke"/><ComboBoxItem Content="Um jeden Wegpunkt"/></ComboBox>
        <ComboBox x:Name="UnitsBox" SelectedIndex="0" SelectionChanged="ChangeUnits" Margin="0,8,0,0" FontSize="11"><ComboBoxItem Content="Karteneinheiten · KE"/><ComboBoxItem Content="% der Kartenbreite"/></ComboBox>
        <TextBlock x:Name="RegionInfo" Text="Bereich auf der Karte auswählen" TextWrapping="Wrap" FontSize="10" Foreground="#777777" Margin="0,10,0,0"/>
+       <CheckBox x:Name="LaunchFortniteBox" FontSize="11" Margin="0,14,0,0" ToolTip="Beim Klick auf Route starten nur Epics dokumentierten Startauftrag senden. Keine Live-Daten und keine automatische Overlay-Freigabe."><TextBlock Text="Beim Routenstart Fortnite über Epic öffnen" TextWrapping="Wrap"/></CheckBox>
        <Separator/>
        <TextBlock Text="DATEIEN &amp; DATEN" FontSize="10" Foreground="#858585" FontWeight="SemiBold" Margin="0,0,0,10"/>
        <Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="7"/><ColumnDefinition/></Grid.ColumnDefinitions><Button Content="Importieren" Click="ImportRoute" FontSize="11" Padding="5,8"/><Button Grid.Column="2" Content="Exportieren" Click="ExportRoute" FontSize="11" Padding="5,8"/></Grid>
@@ -64,7 +72,7 @@
       <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top"><Button Content="−" Click="ZoomOut" Width="32" Padding="0" Margin="0,0,6,0" AutomationProperties.Name="Verkleinern"/><Button Content="+" Click="ZoomIn" Width="32" Padding="0" Margin="0,0,6,0" AutomationProperties.Name="Vergrößern"/><Button Content="Einpassen" Click="FitMap" FontSize="11"/></StackPanel>
       <StackPanel><TextBlock x:Name="MapVersionLabel" FontSize="15" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/><TextBlock x:Name="MapSourceLabel" FontSize="10" Foreground="#808080" Margin="0,5,0,0" TextTrimming="CharacterEllipsis"/>
        <TextBlock x:Name="ChestStatusLabel" Visibility="Collapsed" FontSize="10" Foreground="#A0A0A0" Margin="0,5,0,0" TextWrapping="Wrap"/>
-       <WrapPanel Margin="0,10,0,8"><Button x:Name="WebMapButton" Content="Fortnite.GG öffnen ↗" Click="OpenWebMap" Style="{StaticResource PrimaryButton}" FontSize="11" MinHeight="30" Padding="10,6" Margin="0,0,8,0" AutomationProperties.AutomationId="OpenFortniteGg" ToolTip="Original-Webseite: farbige Karte, Kistenfilter und Zeichnen. Internet, eigene Cookies und Werbung; keine automatische Übernahme in die lokale Bibliothek."/><Button x:Name="SelectRegionButton" Content="Bereich auswählen" Click="SelectRegion" FontSize="11" MinHeight="30" Padding="10,6" AutomationProperties.AutomationId="SelectRegion"/><Button x:Name="ClearRegionButton" Content="×" Click="ClearRegion" MinHeight="30" Width="30" Padding="0" Margin="6,0,0,0" ToolTip="Suchbereich entfernen" AutomationProperties.AutomationId="ClearRegion"/></WrapPanel>
+       <WrapPanel Margin="0,10,0,8"><Button x:Name="WebMapButton" Content="Fortnite.GG öffnen ↗" Click="OpenWebMap" Style="{StaticResource PrimaryButton}" FontSize="11" MinHeight="30" Padding="10,6" Margin="0,0,8,0" AutomationProperties.AutomationId="OpenFortniteGg" ToolTip="Original-Webseite: farbige Karte, Kistenfilter und Zeichnen. Internet, eigene Cookies und Werbung; keine automatische Übernahme in die lokale Bibliothek."/><Button Content="Route zeichnen" Click="SelectRouteTool" FontSize="11" MinHeight="30" Padding="10,6" Margin="0,0,8,0"/><Button x:Name="SelectRegionButton" Content="Bereich auswählen" Click="SelectRegion" FontSize="11" MinHeight="30" Padding="10,6" AutomationProperties.AutomationId="SelectRegion"/><Button x:Name="ClearRegionButton" Content="×" Click="ClearRegion" MinHeight="30" Width="30" Padding="0" Margin="6,0,0,0" ToolTip="Suchbereich entfernen" AutomationProperties.AutomationId="ClearRegion"/></WrapPanel>
       </StackPanel>
      </DockPanel>
      <Border Grid.Row="1" CornerRadius="10" BorderBrush="#292929" BorderThickness="1" Background="#0A0A0A" ClipToBounds="True">
@@ -98,6 +106,7 @@
        <Button Content="Position übernehmen" Click="SetPoint" Margin="0,7,0,0" FontSize="11"/>
        <Separator/>
        <CheckBox x:Name="MarkerTool" Content="Eigene Orte setzen" Checked="ChangeMarkerTool" Unchecked="ChangeMarkerTool" FontSize="11"/>
+       <ComboBox x:Name="MarkerKindBox" SelectedIndex="0" Margin="0,8,0,0" FontSize="11" AutomationProperties.Name="Typ neuer eigener Markierungen"><ComboBoxItem Content="Sonstiger eigener Ort"/><ComboBoxItem Content="Kiste"/><ComboBoxItem Content="Vergrabene Kiste"/><ComboBoxItem Content="Seltene Kiste · Rare Chest"/></ComboBox>
        <CheckBox x:Name="AllMarkers" Content="Alle Orte zeigen" Checked="ChangeAllMarkers" Unchecked="ChangeAllMarkers" FontSize="11" Margin="0,10,0,0"/>
        <TextBlock Text="○ Statische Daten · □ Eigener Ort" FontSize="10" Foreground="#686868" Margin="0,10,0,0" TextWrapping="Wrap"/>
       </StackPanel>

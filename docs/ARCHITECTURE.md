@@ -1,4 +1,4 @@
-# Architektur 0.4
+# Architektur 0.5
 
 ## Komponenten
 
@@ -22,9 +22,9 @@ Bildschirm = Welt × Maßstab + Offset; Maßstab min(Breite,Höhe)/3240 × Zoom.
 
 ## Speicherung und Migration
 
-Schema 4 enthält `routes`, `maps` und `activities`. Maximal 2 MiB JSON, Tiefe 20, doppelte Schlüssel und fremde Felder abgelehnt. Identität, Kartenkennung, endliche Koordinaten und Datenmengen validiert. Schreiben über temporäre Datei im selben Ordner, Datenträger-Flush und Ersetzen; kein Schutzversprechen gegen jeden Hardwareausfall. Beschädigte Startbibliothek bleibt vor automatischem Überschreiben gesperrt.
+Schema 5 enthält `routes`, `maps` und `activities`. Maximal 2 MiB JSON, Tiefe 20, doppelte Schlüssel und fremde Felder abgelehnt. Identität, Kartenkennung, endliche Koordinaten und Datenmengen validiert. Schreiben über temporäre Datei im selben Ordner, Datenträger-Flush und Ersetzen; kein Schutzversprechen gegen jeden Hardwareausfall. Beschädigte Startbibliothek bleibt vor automatischem Überschreiben gesperrt.
 
-Schema 1/2/3: Routen bleiben erhalten, simuliertes `demoHistory` wird nicht als echter Verlauf migriert. Historische Beispielrouten bleiben gespeichert, werden aber nicht automatisch angezeigt oder gestartet. Sichern geschieht erst bei bewusster Speicheraktion; vorher bleibt die alte Datei erhalten. Bilder sind separate lokale Dateien. Kein automatisches Backup und keine Konfliktauflösung zwischen mehreren Instanzen.
+Schema 1/2/3/4: Routen bleiben erhalten, simuliertes `demoHistory` wird nicht als echter Verlauf migriert. Historische Beispielrouten bleiben gespeichert, werden aber nicht automatisch angezeigt oder gestartet. Sichern geschieht erst bei bewusster Speicheraktion; vorher bleibt die alte Datei erhalten. Bilder sind separate lokale Dateien. Kein automatisches Backup und keine Konfliktauflösung zwischen mehreren Instanzen.
 
 ## Tatsächliche manuelle Routengänge
 
@@ -41,3 +41,9 @@ RoutePlan.Area ist ein optionales normiertes Rechteck. Positive Fläche, endlich
 ## Original-Webseite
 
 WebMapWindow verwendet Microsoft Edge WebView2 mit automatisch aktualisierter, separat installierter Runtime. Der Browser lädt erst beim Öffnen fortnite.gg und besitzt ein eigenes Profil. Hostobjekte und WebMessage-Zugriff sind deaktiviert; kein Produkt-Skript wird injiziert. Hauptnavigation auf exakten HTTPS-Host begrenzt; Berechtigungsanfragen und Downloads abgewiesen. Website-Unterressourcen bleiben normale Browseranfragen. Native Bibliothek und Website-Zeichnungen werden nicht synchronisiert. ExternalLinks startet nur zwei feste HTTPS-Ziele über die normale Windows-Shell. Quellen, Runtime-Voraussetzungen und Datenschutz: FORTNITE_GG.md.
+
+## Markierungstypen ohne Live-Ableitung
+
+SpawnKind deklariert Other, Chest, BuriedChest und RareChest. RoutePlan.VisibleKinds ist eine unabhängig kopierte, gespeicherte Liste mit beliebigen eindeutigen Kombinationen einschließlich leer. SpawnIndex.Query kombiniert Typsichtbarkeit mit Geometrie; der native Alle-Orte-Modus wendet dieselben Typfilter an. Unbekannte Enum-Werte, Ganzzahlen und doppelte Werte werden abgelehnt. Schema 1…4 erhält vollständige Standard-Sichtbarkeit; alte untypisierte Punkte bleiben Other. Schema 5 verlangt explizite visibleKinds und pro Punkt kind.
+
+Typfilter sind ausschließlich Darstellungsfilter. Weder eine leere Trefferliste noch ManuallyConfirmed (eigene Ortsbestätigung) bedeutet, dass eine Truhe geöffnet oder ein Bereich leer ist. Kompaktansicht erhält keine Markierungsdaten mehr, zeigt nur die Route und nennt Live-Truhenerkennung/Leave-Zeitpunkt als nicht verfügbar. Keine Spielerposition wird erzeugt und kein Spielprozess untersucht. Optionaler Spielstart über EpicLaunchContract/EpicLauncher: nur feste dokumentierte URI und schreibgeschützte Protokollregistrierung, keine importierten Ziele, keine Live-Verbindung. Aufrufentscheidung über injizierte Testfunktion getrennt geprüft; tatsächlicher Spielstart nicht behauptet.

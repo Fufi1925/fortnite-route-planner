@@ -1,5 +1,6 @@
-PASS supplementary source review: 21 application files, no flagged API/pattern
+PASS supplementary source review: 23 application files, no flagged API/pattern
 PASS pinned Microsoft WebView2 SDK is the only explicit package; ordinary asInvoker / uiAccess=false manifest
 PASS dedicated static-map HTTPS client reviewed separately; no general live-data integration
 PASS isolated ordinary website view; no scripts, native bridge or certificate overrides; exact external-link allowlist
+PASS optional Epic launch request uses a fixed documented URI and read-only OS protocol registration
 LIMIT: source pattern checks do not establish Fortnite permission or ban safety

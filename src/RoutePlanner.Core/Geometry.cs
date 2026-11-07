@@ -59,7 +59,7 @@ public sealed class SpawnIndex
         Validation.RouteGeometry(route);
         if (route.MapVersion != mapVersion) return [];
         if (route.Area is { } area)
-            return cells.Values.SelectMany(bucket => bucket).Where(p => area.Contains(p.Position)).OrderBy(p => p.Id,StringComparer.Ordinal).ToArray();
+            return cells.Values.SelectMany(bucket => bucket).Where(p => route.VisibleKinds.Contains(p.Kind) && area.Contains(p.Position)).OrderBy(p => p.Id,StringComparer.Ordinal).ToArray();
         if (route.Points.Count == 0) return [];
         HashSet<SpawnPoint> candidates = [];
         void Box(MapPoint a, MapPoint b)
@@ -74,7 +74,7 @@ public sealed class SpawnIndex
         if (route.RadiusMode == RadiusMode.Waypoints || route.Points.Count == 1)
             foreach (var p in route.Points) Box(p, p);
         else for (int i = 1; i < route.Points.Count; i++) Box(route.Points[i - 1], route.Points[i]);
-        return candidates.Where(p => Geometry.PointToRoute(p.Position, route.Points, route.RadiusMode)
+        return candidates.Where(p => route.VisibleKinds.Contains(p.Kind) && Geometry.PointToRoute(p.Position, route.Points, route.RadiusMode)
             <= route.Radius + Geometry.Epsilon).OrderBy(p => p.Id, StringComparer.Ordinal).ToArray();
     }
 }

@@ -1,5 +1,7 @@
 # Compliance und Quellen
 
+Version 0.5: [Live-Anforderung erneut geprüft](LIVE_AUTOMATION_REVIEW.md). Einzelne Truhenöffnungen sind in der geprüften Fortnite-GEP-Referenz nicht dokumentiert; Positionsdokumentation ist keine Freigabe für diese WPF-App. Keine aktive Spielanbindung. Lokale Typfilter umgesetzt, Lootpositionen im Kompaktfenster entfernt, keine Ableitung „leer“ aus der Filteranzeige. Separat positiv geprüft: optionaler normaler Epic-Startauftrag nach dokumentierter OS-Protokollaktivierung, ohne Spielzustandszugriff oder bestätigten Spielstart.
+
 Version 0.4: [Fortnite.GG-Entscheidung und Browsergrenzen](FORTNITE_GG.md). Die unveränderte öffentliche Website wird erst nach Klick als gewöhnlicher Browserinhalt angezeigt. Keine Lizenz zur Übernahme des Website-Codes oder gesamten Truhendatensatzes behauptet; keine Synchronisierung, Prozessanbindung oder Live-Match-Daten.
 
 Prüfstand: 2026-11-07 UTC. Version 0.3 ergänzt einen separat geprüften öffentlichen statischen Kartenabruf und die Bereichsauswahl. Einzelentscheidung, aktuelle Saisonreferenz und Truhen-Datenlücke: [CURRENT_MAP_AND_CHESTS.md](CURRENT_MAP_AND_CHESTS.md). Die normale Kartenanzeige ist keine Live-Partie-Anbindung. Version 0.2 ersetzte die bisherige Simulation durch einen realen lokalen Planer. Sie enthält weder generierte Spielobjekte noch eine behauptete Fortnite-Anbindung. Die offiziellen Quellen aus der ursprünglichen Prüfung sind mit Abrufmetadaten in `SOURCE_AUDIT.json` festgehalten.

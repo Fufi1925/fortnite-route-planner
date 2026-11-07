@@ -24,6 +24,16 @@ Die Website hat eigene Cookies, mögliche Werbung und eigene Speicher-/Teilenfun
 
 **Im lokalen Planer sind keine vollständigen Truhendaten enthalten.** Der öffentliche Karten-Endpunkt liefert Bild und POIs, keine Truhenkoordinaten. Die Kistenfilter von Fortnite.GG stehen in der getrennten Original-Webansicht bereit; deren Daten werden nicht kopiert. [Quellenprüfung und genaue Grenzen](docs/CURRENT_MAP_AND_CHESTS.md).
 
+## Eigener Editor und Kistenfilter
+
+**Route zeichnen** aktiviert den lokalen Wegpunktmodus: klicken zum Setzen, Punkte ziehen zum Verschieben und rechts die Reihenfolge ändern. Links lassen sich **Kisten**, **vergrabene Kisten** und **seltene Kisten · Rare Chests** unabhängig ein-/ausblenden, auch alle drei ausschalten. **Sonstige / untypisierte Orte** besitzt einen eigenen Schalter für bisherige generische Einträge. Die Auswahl wird mit der Route gespeichert und auch im Alle-Orte-Modus berücksichtigt.
+
+Unter **Eigene Orte setzen** den Typ neuer Markierungen wählen. Das sind ausdrücklich eigene Angaben, keine automatisch erkannten Kisten. Importierte Punkte behalten ihren deklarierten Typ; alte untypisierte Punkte bleiben Sonstige. Ausgeblendete oder nicht vorhandene Datensätze sind kein Beleg für einen leeren Bereich.
+
+**Beim Routenstart Fortnite über Epic öffnen** ist eine optionale Checkbox. Sie sendet Epics dokumentierten Startauftrag über Windows, wenn der Launcher registriert ist. Bei Fehler bleibt die Planung offen. Eine erfolgreiche Übergabe bestätigt keinen tatsächlich laufenden Spielprozess; Epic verwaltet Installation und Anmeldung.
+
+**Die angefragte Live-Automatik fehlt weiterhin:** keine automatische Charakterposition oder Truhenöffnungserkennung und kein berechneter bester Leave-Zeitpunkt. Das obere rechte Kompaktfenster zeigt die Route ohne Lootpositionen und meldet diese fehlenden Daten sichtbar. [Aktuelle Quellen und Voraussetzungen](docs/LIVE_AUTOMATION_REVIEW.md).
+
 ## Was funktioniert
 
 - Neue Routen anlegen, benennen, speichern, laden, duplizieren und löschen.
@@ -48,7 +58,7 @@ Nur Bilder und Daten öffnen, die du verwenden darfst. Die App prüft Dateiforma
 
 Speicherort: `%LOCALAPPDATA%\Routenatelier\library.json`; importierte Karten liegen im Unterordner `maps`. Der lokale Planer hat keine eigene Telemetrie oder Werbung und überträgt keine lokalen Routen. Der öffentliche Bildabruf sendet HTTPS-Anfragen an fortnite-api.com. Beim Öffnen von Fortnite.GG gelten zusätzlich dessen Netzwerkzugriffe, Cookies, Werbung und Bedingungen; das separate Browserprofil liegt unter `web-fortnite-gg`. Maximal 200 Routen, 500 Punkte pro Route, 100 Karten, 10.000 Orte pro Karte und 200 Verlaufseinträge. JSON maximal 2 MiB, Bildimport maximal 20 MiB, quadratische Bilder mit 64–16.000 Pixeln; für die lokale Darstellung auf maximal 2048 Pixel normalisiert.
 
-Schema 1/2/3 wird nach Schema 4 migriert. Eigene alte Routen bleiben erhalten; historische Beispieldaten werden nicht als aktuelle Nutzerdaten angezeigt und simulierte Verlaufswerte werden nicht in den echten Verlauf übernommen. Eine Instanz pro Benutzer vorgesehen. Zum Deinstallieren App-Verzeichnis und bei Bedarf das benutzerbezogene Datenverzeichnis entfernen; exportierte Dateien separat löschen.
+Schema 1/2/3/4 wird nach Schema 5 migriert. Eigene alte Routen bleiben erhalten; historische Beispieldaten werden nicht als aktuelle Nutzerdaten angezeigt und simulierte Verlaufswerte werden nicht in den echten Verlauf übernommen. Eine Instanz pro Benutzer vorgesehen. Zum Deinstallieren App-Verzeichnis und bei Bedarf das benutzerbezogene Datenverzeichnis entfernen; exportierte Dateien separat löschen.
 
 ## Entwickeln
 

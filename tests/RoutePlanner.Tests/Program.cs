@@ -72,13 +72,13 @@ Check("Import/Export: vollständiger Roundtrip", () => {
     var doc=RouteJson.Parse(RouteJson.Serialize(new() {Routes=[r]}));
     True(doc.Routes[0].Id==r.Id&&doc.Routes[0].Name==r.Name&&doc.Routes[0].Points.SequenceEqual(r.Points));
 });
-Check("Schema: Migration v1/v2/v3 nach v4 ohne simulierten Verlauf", () => {
-    foreach(int version in new[]{1,2,3}) {
-        var text=Json(Line()).Replace("\"schemaVersion\": 4","\"schemaVersion\": "+version);
+Check("Schema: Migration v1/v2/v3/v4 nach v5 ohne simulierten Verlauf", () => {
+    foreach(int version in new[]{1,2,3,4}) {
+        var text=Json(Line()).Replace("\"schemaVersion\": 5","\"schemaVersion\": "+version);
         var node=System.Text.Json.Nodes.JsonNode.Parse(text)!.AsObject();
         if(version<3) node["demoHistory"]=new System.Text.Json.Nodes.JsonArray(new System.Text.Json.Nodes.JsonObject { ["simulated"]=true });
         var doc=RouteJson.Parse(Enc(node.ToJsonString()));
-        True(doc.SchemaVersion==4&&doc.Activities.Count==0&&doc.Routes.Count==1);
+        True(doc.SchemaVersion==5&&doc.Activities.Count==0&&doc.Routes.Count==1);
         True(!Encoding.UTF8.GetString(RouteJson.Serialize(doc)).Contains("demoHistory"));
     }
 });
@@ -235,6 +235,59 @@ Check("Fortnite.GG: nur die Original-HTTPS-Seite ohne fremde Hosts und lokale Zi
     foreach(var address in new[]{"http://fortnite.gg/","https://fortnite.gg.evil.example/","https://evil.example/fortnite.gg","https://fortnite.gg@evil.example/","https://user@fortnite.gg/","https://fortnite.gg:8443/","file:///tmp/map.html","javascript:alert(1)"})True(!FortniteGgSite.IsSiteNavigation(address));
     True(FortniteGgSite.IsExternalLink(FortniteGgSite.MapUrl)&&FortniteGgSite.IsExternalLink(FortniteGgSite.RuntimeUrl));
     True(!FortniteGgSite.IsExternalLink("https://fortnite.gg/?unknown=1")&&!FortniteGgSite.IsExternalLink("file:///tmp/run.exe"));
+});
+Check("Kistenfilter: alle acht Kombinationen in Radius, Bereich und Wegpunktmodus", () => {
+    var types=new[]{SpawnKind.Chest,SpawnKind.BuriedChest,SpawnKind.RareChest};
+    var points=types.Select((kind,i)=>new SpawnPoint(i.ToString(),new(40+i*10,0),Kind:kind)).Append(new("outside",new(900,900),Kind:SpawnKind.Chest)).ToArray();
+    var index=new SpawnIndex(points);
+    for(int mask=0;mask<8;mask++)foreach(var mode in Enum.GetValues<RadiusMode>())foreach(bool area in new[]{false,true})
+    {
+        var kinds=types.Where((_,i)=>(mask&(1<<i))!=0).ToList();
+        var route=Line() with {VisibleKinds=kinds,RadiusMode=mode,Radius=100,Area=area?new SearchArea(20,0,100,10):null};
+        True(index.Query(route).Select(p=>p.Kind).Order().SequenceEqual(kinds.Order()));
+    }
+});
+Check("Kistenfilter: nichts anzeigen ändert weder Bestand noch Bestätigungen", () => {
+    var point=new SpawnPoint("own",new(50,0),true,"Eigene Eingabe",SpawnKind.Chest);
+    var map=new MapAsset {Spawns=[point]};var route=Line() with {VisibleKinds=[]};
+    True(new SpawnIndex(map.Spawns).Query(route).Count==0&&map.Spawns.Count==1&&map.Spawns[0].ManuallyConfirmed);
+    route.VisibleKinds=[SpawnKind.Chest];True(new SpawnIndex(map.Spawns).Query(route).Single()==point);
+});
+Check("Epic-Start: ausschließlich festes dokumentiertes Fortnite-Protokollziel", () => {
+    var uri=new Uri(EpicLaunchContract.FortniteUri);
+    True(uri.Scheme=="com.epicgames.launcher"&&uri.Host=="apps");
+    True(Uri.UnescapeDataString(uri.AbsolutePath)=="/fn:4fe75bbc5a674f4f9b356b5c90567da5:Fortnite");
+    True(uri.Query=="?action=launch&silent=true"&&uri.Fragment==""&&uri.UserInfo=="");
+    True(!FortniteGgSite.IsExternalLink(EpicLaunchContract.FortniteUri));
+});
+Check("Kistenfilter: Typen und Auswahl bleiben in Datei und unabhängiger Kopie erhalten", () => {
+    var route=Line() with {VisibleKinds=[SpawnKind.BuriedChest,SpawnKind.RareChest]};
+    var map=new MapAsset {Spawns=[new("buried",new(50,0),Source:"Eigene Messung",Kind:SpawnKind.BuriedChest)]};
+    var loaded=RouteJson.Parse(RouteJson.Serialize(new(){Routes=[route],Maps=[map]}));
+    True(loaded.Routes[0].VisibleKinds.SequenceEqual(route.VisibleKinds)&&loaded.Maps[0].Spawns[0].Kind==SpawnKind.BuriedChest);
+    var copy=route.Copy(true);copy.VisibleKinds.Clear();True(route.VisibleKinds.Count==2);
+});
+Check("Kistenfilter: alte untypisierte Orte bleiben sonstige Orte; keine erfundene Kategorie", () => {
+    var doc=new LibraryDocument {Routes=[Line()],Maps=[new(){Spawns=[new("old",new(50,0))]}]};
+    var node=System.Text.Json.Nodes.JsonNode.Parse(RouteJson.Serialize(doc))!.AsObject();node["schemaVersion"]=4;
+    node["routes"]![0]!.AsObject().Remove("visibleKinds");node["maps"]![0]!["spawns"]![0]!.AsObject().Remove("kind");
+    var migrated=RouteJson.Parse(Enc(node.ToJsonString()));
+    True(migrated.SchemaVersion==5&&migrated.Routes[0].VisibleKinds.Count==4&&migrated.Maps[0].Spawns[0].Kind==SpawnKind.Other);
+    migrated.Routes[0].VisibleKinds=[SpawnKind.Chest];True(new SpawnIndex(migrated.Maps[0].Spawns).Query(migrated.Routes[0]).Count==0);
+});
+Check("Kistenfilter: fremde, doppelte, fehlende und numerische Typen ablehnen", () => {
+    Reject(()=>Validation.Route(Line() with {VisibleKinds=[SpawnKind.Chest,SpawnKind.Chest]}));
+    Reject(()=>Validation.Route(Line() with {VisibleKinds=[(SpawnKind)99]}));
+    Reject(()=>Validation.Map(new(){Spawns=[new("bad",new(50,0),Kind:(SpawnKind)99)]}));
+    var node=System.Text.Json.Nodes.JsonNode.Parse(Json(Line()))!.AsObject();node["routes"]![0]!.AsObject().Remove("visibleKinds");
+    Reject(()=>RouteJson.Parse(Enc(node.ToJsonString())));
+    foreach(string value in new[]{"[99]","[\"Unknown\"]","null"})
+    {
+        node=System.Text.Json.Nodes.JsonNode.Parse(Json(Line()))!.AsObject();node["routes"]![0]!["visibleKinds"]=System.Text.Json.Nodes.JsonNode.Parse(value);
+        Reject(()=>RouteJson.Parse(Enc(node.ToJsonString())));
+    }
+    node=System.Text.Json.Nodes.JsonNode.Parse(RouteJson.Serialize(new(){Maps=[new(){Spawns=[new("own",new(50,0),Kind:SpawnKind.Chest)]}]}))!.AsObject();
+    node["maps"]![0]!["spawns"]![0]!.AsObject().Remove("kind");Reject(()=>RouteJson.Parse(Enc(node.ToJsonString())));
 });
 Check("Palette: schwarze/graue native Oberfläche; Kartenbilder und Original-Webseite dürfen Farben behalten", () => {
     var paths=Directory.GetFiles("src/RoutePlanner.App","*.xaml").Concat(new[]{"src/RoutePlanner.App/MapView.cs","src/RoutePlanner.App/Dialogs.cs"});

@@ -4,6 +4,7 @@ namespace RoutePlanner.Core;
 
 public readonly record struct MapPoint(double X, double Y);
 public enum RadiusMode { Corridor, Waypoints }
+public enum SpawnKind { Other, Chest, BuriedChest, RareChest }
 public sealed record SearchArea(double Left, double Top, double Right, double Bottom)
 {
     public bool Contains(MapPoint point) => Geometry.IsOnMap(point) && point.X >= Left && point.X <= Right && point.Y >= Top && point.Y <= Bottom;
@@ -32,16 +33,19 @@ public sealed record RoutePlan : INotifyPropertyChanged
     public double Radius { get; set; } = 110;
     public RadiusMode RadiusMode { get; set; }
     public SearchArea? Area { get; set; }
+    public List<SpawnKind> VisibleKinds { get; set; } = [.. Enum.GetValues<SpawnKind>()];
     public List<MapPoint> Points { get; init; } = [];
     public RoutePlan Copy(bool newIdentity = false) => new()
     {
         Id = newIdentity ? Guid.NewGuid() : Id,
         Name = newIdentity ? Name[..Math.Min(Name.Length, 100)] + " – Kopie" : Name,
-        MapVersion = MapVersion, Radius = Radius, RadiusMode = RadiusMode, Area = Area, Points = [.. Points]
+        MapVersion = MapVersion, Radius = Radius, RadiusMode = RadiusMode, Area = Area,
+        VisibleKinds = [.. VisibleKinds], Points = [.. Points]
     };
 }
 
-public sealed record SpawnPoint(string Id, MapPoint Position, bool ManuallyConfirmed = false, string? Source = null);
+public sealed record SpawnPoint(string Id, MapPoint Position, bool ManuallyConfirmed = false, string? Source = null,
+    SpawnKind Kind = SpawnKind.Other);
 public sealed record RouteActivity(Guid Id, Guid RouteId, string RouteName, string MapVersion,
     DateTimeOffset StartedAt, int DurationSeconds, double PlannedDistance, int VisitedPoints, int TotalPoints, bool Completed);
 
@@ -62,7 +66,7 @@ public sealed record MapAsset
 
 public sealed record LibraryDocument
 {
-    public int SchemaVersion { get; init; } = 4;
+    public int SchemaVersion { get; init; } = 5;
     public List<RoutePlan> Routes { get; init; } = [];
     public List<MapAsset> Maps { get; init; } = [];
     public List<RouteActivity> Activities { get; init; } = [];

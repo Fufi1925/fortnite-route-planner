@@ -1,14 +1,14 @@
-# Testbericht 0.4
+# Testbericht 0.5
 
-Stand: 2026-11-07. Lokale Umgebung Linux x64, SDK 10.0.403. Der [Windows-Lauf 42356295734](https://github.com/Fufi1925/fortnite-route-planner/actions/runs/42356295734) hat 42 Kernprüfungen, den WPF-Test inklusive tatsächlichem HTTPS-Kartenabruf und den Start der selbstenthaltenden EXE erfolgreich ausgeführt. Die echte Screenshot-Abnahme führte anschließend zu höherem Kartenkontrast. Für das endgültige Release sind erneut dessen erfolgreiche CI-Ausgaben und das Artefakt `offline-verification` maßgeblich; eine bloße Kompilierung wird nicht als Windows-Ausführung ausgegeben.
+Stand: 2026-11-07. Lokale Umgebung Linux x64, SDK 10.0.403. Die aktuellen lokalen Ausgaben dokumentieren 49 erfolgreiche Kernprüfungen und einen fehlerfreien WPF-/UI-Test-Build. Für die anschließende tatsächliche Windows-Ausführung, WebView2 und gepackte EXE sind ausschließlich die erfolgreichen CI-Ausgaben des jeweiligen Builds und das Artefakt `offline-verification` maßgeblich. Keine bloße Kompilierung wird als Windows-Ausführung ausgegeben.
 
 ## Lokal tatsächlich ausgeführt
 
-- `dotnet run --project tests/RoutePlanner.Tests -c Release`: 43 erfolgreiche Prüfungen, 0 Fehler.
+- `dotnet run --project tests/RoutePlanner.Tests -c Release`: 49 erfolgreiche Prüfungen, 0 Fehler.
 - `dotnet build tests/RoutePlanner.UiSmoke -c Release --no-restore`: Windows-UI-Test und Anwendung kompiliert.
 - `python3 scripts/audit-source.py`: ergänzende Prüfung von Anwendungsdateien, Manifest und Abhängigkeiten.
 
-Die vollständigen lokalen Ausgaben stehen in `docs/test-results/core-tests.txt`, `windows-build.txt` und `source-audit.txt`. Das ältere `windows-publish.txt` dokumentiert den ursprünglichen Publish-Lauf; für den 0.3-Build sind ausschließlich die neuen CI-Ausgaben maßgeblich.
+Die vollständigen lokalen Ausgaben stehen in `docs/test-results/core-tests.txt`, `windows-build.txt` und `source-audit.txt`. Das ältere `windows-publish.txt` dokumentiert den ursprünglichen Publish-Lauf; für den 0.5-Build sind ausschließlich die neuen CI-Ausgaben maßgeblich.
 
 ## Kernprüfungen
 
@@ -37,3 +37,9 @@ Lokal ausgeführt: 43 Kernprüfungen einschließlich exakter Website-/Link-URL-A
 Der folgende Windows-Workflow prüft zusätzlich Farberhalt beim Import/Speichern/Laden, den tatsächlichen Onlineabruf der farbigen Karte, die echte Fortnite.GG-Ansicht in WebView2, sichtbare und aktivierbare Kistenfilter, geladene Kartenkacheln, Aufnahme über CapturePreviewAsync und Rückweg zum lokalen Planer. Produktcode injiziert keine Skripte; DOM-Prüfungen sind ausschließlich im Testprogramm. Der EXE-Test öffnet über UI Automation nur die eigene auf dem Runner gestartete App und prüft den gepackten WebView2-Loader. Maßgeblich sind erst die tatsächlichen erfolgreichen CI-Ausgaben; fehlende Runtime oder Netzwerkfehler werden nicht als Erfolg ausgegeben.
 
 Der erste Windows-Lauf 42357929656 bestätigte Farberhalt und echten Fortnite.GG-Aufruf, scheiterte aber am synthetischen DOM-Klick der Filterprüfung. Die Website verarbeitet normale Browser-Eingaben; der Test sendet nun über das WebView2-Testprotokoll Mausereignisse ausschließlich an seine eigene Webansicht und prüft den tatsächlich aktivierten Schalterzustand. Das Produkt injiziert weiterhin keine Skripte. Die Onlinekarte begrenzt ihre Fenstergröße auf den verfügbaren Arbeitsbereich.
+
+## Ergänzungen 0.5
+
+Lokal tatsächlich 49 Kernprüfungen erfolgreich, 0 Fehler, einschließlich der festen Epic-Launcher-URI. Maßgeblich sind die aktuellen Testausgaben. Neue Prüfungen testen alle acht Kistenfilterkombinationen mit Bereich/Radius/Wegpunktmodus, Erhalt der unveränderten gespeicherten Daten beim Ausblenden, Typ-/Filter-Roundtrip, unabhängige Routenkopien, Migration untypisierter Altdateien nach Schema 5 sowie ungültige, doppelte und fehlende Typen. WPF und UI-Prüfung kompilieren.
+
+Der anschließende Windows-Lauf bedient zusätzlich alle acht Kombinationen über echte WPF-Checkboxen, prüft persistierte Auswahl nach Laden, Importtyp-Erhalt und den Alle-Orte-Modus. Das Kompaktfenster darf keine Lootpositionen anzeigen. Bestehende echte Karten-/WebView2-/EXE-Prüfungen bleiben erhalten. Der optionale Epic-Aufruf wird durch eine injizierte Testfunktion gezählt; fehlgeschlagene Aufträge dürfen keine Sitzung starten, ohne ausgewählte Option erfolgt kein Aufruf. Kein echter Fortnite-Prozess gestartet, keine behauptete Live-Prüfung oder berechneter optimaler Ausstieg. Für den finalen Build gelten ausschließlich dessen tatsächliche CI-Ausgaben.

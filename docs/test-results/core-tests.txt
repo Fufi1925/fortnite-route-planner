@@ -11,7 +11,7 @@ PASS Planungszustand: leerer Name verhindert keinen Kartenfilter
 PASS Kartengrenzen: Ecken zulässig, NaN/Infinity/außerhalb ungültig
 PASS Index: deterministisch identisch mit vollständiger Suche
 PASS Import/Export: vollständiger Roundtrip
-PASS Schema: Migration v1/v2/v3 nach v4 ohne simulierten Verlauf
+PASS Schema: Migration v1/v2/v3/v4 nach v5 ohne simulierten Verlauf
 PASS Schema: unbekannte und fehlende Version ablehnen
 PASS Version: alte/fremde Karte warnbar und keine Spawns
 PASS Import: defekt, null, doppelte Schlüssel, fremde Felder
@@ -39,7 +39,13 @@ PASS Kartenabruf: Retry-After verhindert weitere Anfragen
 PASS Kartenabruf: ungültiges Bild und übergroße Antwort ablehnen
 PASS Kartenquelle: Metadaten und Abrufdatum bleiben nachvollziehbar
 PASS Fortnite.GG: nur die Original-HTTPS-Seite ohne fremde Hosts und lokale Ziele
+PASS Kistenfilter: alle acht Kombinationen in Radius, Bereich und Wegpunktmodus
+PASS Kistenfilter: nichts anzeigen ändert weder Bestand noch Bestätigungen
+PASS Epic-Start: ausschließlich festes dokumentiertes Fortnite-Protokollziel
+PASS Kistenfilter: Typen und Auswahl bleiben in Datei und unabhängiger Kopie erhalten
+PASS Kistenfilter: alte untypisierte Orte bleiben sonstige Orte; keine erfundene Kategorie
+PASS Kistenfilter: fremde, doppelte, fehlende und numerische Typen ablehnen
 PASS Palette: schwarze/graue native Oberfläche; Kartenbilder und Original-Webseite dürfen Farben behalten
-PROFILE index=7.3ms query-mean=8.52ms managed=18.1MiB working-set=88.9MiB
+PROFILE index=9.3ms query-mean=10.61ms managed=16.4MiB working-set=90.5MiB
 PASS Performance: 100.000 Punkte / 100 Filter, Referenzergebnis
-RESULT 43 passed; 0 failed
+RESULT 49 passed; 0 failed

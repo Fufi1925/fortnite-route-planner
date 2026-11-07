@@ -16,15 +16,17 @@ public partial class CompactWindow : Window
         Width = Math.Min(Width,area.Width); Height = Math.Min(Height,area.Height);
         Left = Math.Max(area.Left,area.Right-Width-16); Top = area.Top+16;
     }
-    public void UpdateRoute(RoutePlan route,string mapVersion,ImageSource? image,IReadOnlyList<SpawnPoint> spawns,
-        HashSet<string> confirmed,int visited,bool running,string progress,bool showFanNotice = false)
+    public void UpdateRoute(RoutePlan route,string mapVersion,ImageSource? image,
+        int visited,bool running,string progress,bool showFanNotice = false,string launchStatus = "")
     {
         FanNotice.Text = PublicMapContract.FanNotice; FanNotice.Visibility = showFanNotice ? Visibility.Visible : Visibility.Collapsed;
         RouteTitle.Text = route.Name;
         Metrics.Text = $"{route.Points.Count} Wegpunkte · {Geometry.Length(route.Points):0} KE geplante Strecke";
         CompactMap.Route = route; CompactMap.ActiveMapVersion = mapVersion; CompactMap.MapImage = image;
-        CompactMap.VisibleSpawns = spawns; CompactMap.Confirmed = confirmed; CompactMap.VisitedPoints = visited; CompactMap.InvalidateVisual();
+        // Only the route is shown in the compact window; no chest/loot positions.
+        CompactMap.VisibleSpawns = []; CompactMap.Confirmed = []; CompactMap.VisitedPoints = visited; CompactMap.InvalidateVisual();
         ProgressLabel.Text = running ? progress : "Keine aktive Route · manuelle Planung";
+        EpicStatus.Text = launchStatus; EpicStatus.Visibility = string.IsNullOrEmpty(launchStatus) ? Visibility.Collapsed : Visibility.Visible;
         NextPointButton.IsEnabled = running;
     }
     private void AdvancePoint(object sender,RoutedEventArgs e) => AdvanceRequested?.Invoke();

@@ -14,7 +14,7 @@ Get-ChildItem $output -Filter *.pdb -File | Remove-Item
 Copy-Item README.md,LICENSE -Destination $output
 Copy-Item docs,third-party,examples -Destination $output -Recurse
 @"
-ROUTE PLANNER 0.4.0 - LOKALE ROUTENPLANUNG
+ROUTE PLANNER 0.5.0 - LOKALE ROUTENPLANUNG
 
 RoutePlanner.exe unter Windows x64 starten. Keine .NET-Installation notwendig.
 Eigene Karten, Routen und Orte; keine Fortnite-Verbindung oder Live-Erkennung.

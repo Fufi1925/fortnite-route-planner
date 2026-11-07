@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 4,
+  "schemaVersion": 5,
   "routes": [
     {
       "id": "7eecb03f-5030-4773-93c8-7a4a646ce544",
@@ -7,7 +7,13 @@
       "mapVersion": "WORKSPACE-3000-V1",
       "radius": 110,
       "radiusMode": "Corridor",
-      "points": []
+      "points": [],
+      "visibleKinds": [
+        "Other",
+        "Chest",
+        "BuriedChest",
+        "RareChest"
+      ]
     }
   ],
   "maps": [],
