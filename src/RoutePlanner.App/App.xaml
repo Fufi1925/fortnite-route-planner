@@ -71,7 +71,7 @@
        <ControlTemplate.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Chrome" Property="BorderBrush" Value="#616161"/></Trigger></ControlTemplate.Triggers>
       </ControlTemplate></ToggleButton.Template>
      </ToggleButton>
-     <ContentPresenter Margin="11,0,32,0" VerticalAlignment="Center" IsHitTestVisible="False" Content="{TemplateBinding SelectionBoxItem}" ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"/>
+     <ContentPresenter Margin="11,0,32,0" VerticalAlignment="Center" IsHitTestVisible="False" Content="{TemplateBinding SelectionBoxItem}" ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}" ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"/>
      <Popup x:Name="PART_Popup" AllowsTransparency="True" Placement="Bottom" IsOpen="{TemplateBinding IsDropDownOpen}" Focusable="False">
       <Border MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}" Background="#161616" BorderBrush="#383838" BorderThickness="1" CornerRadius="6" Padding="4" Margin="0,5,0,0">
        <ScrollViewer MaxHeight="260" VerticalScrollBarVisibility="Auto"><ItemsPresenter/></ScrollViewer>
@@ -97,7 +97,7 @@
   </Style>
   <Style x:Key="ScrollThumb" TargetType="Thumb"><Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Thumb"><Border Background="#3C3C3C" CornerRadius="3" Margin="1"/></ControlTemplate></Setter.Value></Setter></Style>
   <Style TargetType="ScrollBar">
-   <Setter Property="Width" Value="7"/><Setter Property="MinHeight" Value="12"/>
+   <Setter Property="Width" Value="7"/><Setter Property="MinWidth" Value="0"/><Setter Property="MaxWidth" Value="7"/><Setter Property="MinHeight" Value="12"/>
    <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ScrollBar">
     <Track x:Name="PART_Track" IsDirectionReversed="True" Orientation="{TemplateBinding Orientation}">
      <Track.DecreaseRepeatButton><RepeatButton Command="ScrollBar.PageUpCommand" Opacity="0" Focusable="False"/></Track.DecreaseRepeatButton>

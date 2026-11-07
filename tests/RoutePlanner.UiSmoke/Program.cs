@@ -26,7 +26,7 @@ public static class Program
                 var store = new LocalStore(temp);
                 window = new MainWindow(temp); window.Show();
                 await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
-                // Render the real window at a common desktop size, independent of runner screen resolution.
+                // Request a common desktop size; Windows may cap it to the runner's screen limits.
                 window.Width = 1440; window.Height = 920; window.UpdateLayout();
                 var map = (MapView)window.FindName("PlannerMap");
                 Assert(map.Route!.Points.Count == 0 && map.VisibleSpawns.Count == 0 && store.Load().Routes.Count == 0,"Start ohne erfundene Routen, Orte oder Statistiken");
@@ -43,6 +43,8 @@ public static class Program
                 }
                 Click(window,"Speichern");
                 Assert(store.Load().Routes.Single().Points.Count == 5 && store.Load().Routes.Single().Name == "Meine Route","Echte Wegpunktbearbeitung und Speicherung");
+                window.UpdateLayout();
+                Assert(Descendants(routes).OfType<TextBlock>().Any(t=>t.Text=="Meine Route") && !Descendants(routes).OfType<TextBlock>().Any(t=>t.Text.StartsWith("RoutePlan {",StringComparison.Ordinal)),"Routenauswahl zeigt den Namen statt technischer Datensätze");
                 var originalId = map.Route!.Id;
                 window.AddManualMarker(new(910,1890));
                 Assert(store.Load().Maps.Single().Spawns.Single().ManuallyConfirmed,"Eigener Ort dauerhaft gespeichert");
@@ -76,7 +78,7 @@ public static class Program
                 Assert(map.MapImage is not null,"Kartenbild nach Neustart mit Hashprüfung geladen");
                 routes.SelectedItem = routes.Items.OfType<RoutePlan>().Single(r=>r.Id == originalId);
                 map.ZoomBy(1.2);map.Fit();
-                Capture(window,"planner.png");
+                Capture(window,"planner-reloaded.png");
                 Click(window,"Route starten  →");
                 await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
                 var compact = app.Windows.OfType<CompactWindow>().Single();
