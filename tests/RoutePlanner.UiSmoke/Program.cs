@@ -16,7 +16,7 @@ public static class Program
         int exitCode = 1;
         string temp = Path.Combine(Path.GetTempPath(), "route-ui-"+Guid.NewGuid());
         var app = new RoutePlanner.App.App();
-        app.InitializeComponent(); app.StartupUri = null; app.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+        app.InitializeComponent(); app.OpenPlannerOnStartup = false; app.ShutdownMode = ShutdownMode.OnExplicitShutdown;
         app.Dispatcher.BeginInvoke(async () =>
         {
             MainWindow? window = null;

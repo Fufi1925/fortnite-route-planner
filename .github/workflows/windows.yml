@@ -31,6 +31,9 @@ jobs:
       - name: Publish portable Windows x64 bundle
         shell: pwsh
         run: ./scripts/publish.ps1
+      - name: Start the published self-contained EXE
+        shell: pwsh
+        run: ./scripts/smoke-published.ps1 | Tee-Object artifacts/published-exe-smoke.txt
       - name: Upload Windows build
         uses: actions/upload-artifact@v4
         with:
