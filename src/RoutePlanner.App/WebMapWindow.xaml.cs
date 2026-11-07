@@ -17,7 +17,16 @@ public partial class WebMapWindow : Window
     {
         profileDirectory = Path.Combine(dataDirectory, "web-fortnite-gg");
         InitializeComponent();
-        Loaded += async (_, _) => await InitializeBrowser();
+        Attribution.Text = PublicMapContract.FanNotice;
+        Loaded += async (_, _) =>
+        {
+            var area = SystemParameters.WorkArea;
+            Width = Math.Max(MinWidth, Math.Min(Width, area.Width));
+            Height = Math.Max(MinHeight, Math.Min(Height, area.Height));
+            Left = area.Left + Math.Max(0, (area.Width-Width)/2);
+            Top = area.Top + Math.Max(0, (area.Height-Height)/2);
+            await InitializeBrowser();
+        };
         Closed += (_, _) => { closed = true; firstNavigation.TrySetResult(false); Site.Dispose(); };
     }
     private async Task InitializeBrowser()

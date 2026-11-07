@@ -143,17 +143,20 @@ public static class Program
                         if(filters)break;await Task.Delay(500);
                     }
                     Assert(filters,"Originalseite enthält Chests, Buried Chests und Rare Chests");
-                    await browser.ExecuteScriptAsync("(()=>{let e=document.getElementById('spawns-buried_chests');if(e.getBoundingClientRect().height===0)document.querySelector('[data-search=spawns] .arrow').click();})()");
+                    await BrowserClick(browser,"[data-search=spawns] .arrow");
                     await Task.Delay(500);
                     foreach(var (label,id) in new[]{("Chests","spawns-chests"),("Buried Chests","spawns-buried_chests"),("Rare Chests","spawns-rare_chests")})
                     {
                         string target=JsonSerializer.Serialize(id);
-                        string activated=await browser.ExecuteScriptAsync("(()=>{let e=document.getElementById("+target+");if(!e || e.getBoundingClientRect().height===0)return false;if(!e.classList.contains('selected'))e.querySelector('span').click();return e.classList.contains('selected');})()");
+                        await BrowserClick(browser,"#"+id+" > span");
+                        string activated=await browser.ExecuteScriptAsync("document.getElementById("+target+").classList.contains('selected')");
                         Assert(activated=="true","Sichtbarer Fortnite.GG-Filter bedienbar: "+label);
                     }
                     await Task.Delay(1000);
                     string tiles=await browser.ExecuteScriptAsync("document.querySelectorAll('.leaflet-tile-loaded').length>0");
                     Assert(tiles=="true","Echte farbige Kartenkacheln der Originalseite geladen");
+                    await BrowserClick(browser,"[data-tooltip='Draw on map']");
+                    Assert(await browser.ExecuteScriptAsync("document.querySelector('[data-tooltip=\"Draw a path\"]').getBoundingClientRect().height>0")=="true","Originales Routen-Zeichenwerkzeug sichtbar und geöffnet");
                     Directory.CreateDirectory("artifacts/ui-smoke");
                     using(var output=File.Create("artifacts/ui-smoke/fortnite-gg.png"))await browser.CapturePreviewAsync(CoreWebView2CapturePreviewImageFormat.Png,output);
                     Click(web,"Zur lokalen Planung");
@@ -213,5 +216,16 @@ public static class Program
         byte[] pixels=new byte[bitmap.PixelWidth*bitmap.PixelHeight*4];bitmap.CopyPixels(pixels,bitmap.PixelWidth*4,0);
         for(int i=0;i<pixels.Length;i+=4)if(pixels[i]!=pixels[i+1]||pixels[i]!=pixels[i+2])return true;
         return false;
+    }
+    private static async Task BrowserClick(CoreWebView2 browser,string selector)
+    {
+        // Real browser input only within this test's WebView2, never Windows/game input.
+        string position=await browser.ExecuteScriptAsync("(()=>{let e=document.querySelector("+JsonSerializer.Serialize(selector)+");if(!e)return null;let r=e.getBoundingClientRect();return {x:r.left+r.width/2,y:r.top+r.height/2,height:r.height};})()");
+        using var point=JsonDocument.Parse(position);
+        if(point.RootElement.ValueKind==JsonValueKind.Null||point.RootElement.GetProperty("height").GetDouble()==0)throw new Exception("Webelement nicht sichtbar: "+selector);
+        double x=point.RootElement.GetProperty("x").GetDouble(),y=point.RootElement.GetProperty("y").GetDouble();
+        foreach(string type in new[]{"mousePressed","mouseReleased"})
+            await browser.CallDevToolsProtocolMethodAsync("Input.dispatchMouseEvent",JsonSerializer.Serialize(new {type,x,y,button="left",clickCount=1}));
+        await Task.Delay(250);
     }
 }

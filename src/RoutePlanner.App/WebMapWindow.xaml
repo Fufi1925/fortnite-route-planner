@@ -37,6 +37,7 @@
    <Button Content="Webdaten löschen" Click="ClearWebData" Style="{StaticResource QuietButton}" HorizontalAlignment="Right" FontSize="10" ToolTip="Cookies, Cache und Zeichnungsdaten dieser Webansicht löschen; lokale Routen bleiben erhalten."/>
    <TextBlock x:Name="PageStatus" Text="Fortnite.GG wird geladen …" Foreground="#A0A0A0" FontSize="10" TextWrapping="Wrap" AutomationProperties.AutomationId="WebMapStatus"/>
    <TextBlock Text="Original-Webseite mit eigenen Cookies, Werbung und Bedingungen. Web-Routen werden nicht automatisch in deine lokale Bibliothek übernommen. Statische mögliche Spawns, keine Live-Partie." FontSize="10" Foreground="#777777" TextWrapping="Wrap" Margin="0,5,0,0"/>
+   <TextBlock x:Name="Attribution" FontSize="9" Foreground="#858585" TextWrapping="Wrap" Margin="0,5,0,0"/>
   </StackPanel>
  </Grid></Border>
 </Window>
