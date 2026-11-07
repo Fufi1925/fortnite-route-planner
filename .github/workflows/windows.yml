@@ -2,7 +2,7 @@ name: Windows build and offline checks
 on:
   workflow_dispatch:
   push:
-    branches: [feature/fortnite-route-overlay]
+    branches: [main, feature/fortnite-route-overlay]
   pull_request:
 permissions:
   contents: read

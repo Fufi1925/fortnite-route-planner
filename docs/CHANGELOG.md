@@ -16,4 +16,4 @@ Titel: `Add offline route planner with neutral demo data and Windows build`
 
 Beschreibung: Fügt einen selbstständigen WPF-Planer hinzu, der eigene Routen auf einer generierten Karte speichert und mögliche Demo-Spawns nach Radius filtert. Ein normales Kompaktfenster und simulierte Rundenzusammenfassungen funktionieren ohne Fortnite-Anbindung. 27 Kernprüfungen bestanden unter Linux; Windows-x64-Publish und UI-Smoke-Projekt kompiliert. Windows-Ausführung/DPI und reale Bedienung noch abzunehmen. Keine Freigabe für Nutzung mit Fortnite und kein Live-Adapter.
 
-Kein PR erstellt oder Branch gepusht; kein Remote konfiguriert. Ein vorhandener `main`-Branch wurde nicht verändert.
+Der ursprüngliche Stand wurde lokal auf `feature/fortnite-route-overlay` erstellt. Auf ausdrücklichen Wunsch des Nutzers wird der vollständige Quellcode als neues öffentliches Repository `Fufi1925/fortnite-route-planner` veröffentlicht. Im neuen Repository wird `main` initial befüllt; kein bestehender Hauptbranch wird überschrieben. Kein PR und kein Release vorgesehen. Der Windows-Workflow läuft auch auf `main`.

@@ -1,10 +1,12 @@
-# Routenatelier
+# Fortnite Route Planner · Routenatelier
 
-Private Windows-Desktop-App zum **offline** Planen von Routen. Version 0.1.0 verwendet ausschließlich eine neutrale Beispielkarte und 600 generierte mögliche Spawnpunkte. **Keine Fortnite-Verbindung, keine echten Fortnite-Kartendaten, keine Live-Erkennung und keine Freigabe für den Einsatz mit Fortnite.**
+Windows-Desktop-App zum **offline** Planen von Routen mit öffentlich verfügbarem Quellcode. Version 0.1.0 verwendet ausschließlich eine neutrale Beispielkarte und 600 generierte mögliche Spawnpunkte. **Keine Fortnite-Verbindung, keine echten Fortnite-Kartendaten, keine Live-Erkennung und keine Freigabe für den Einsatz mit Fortnite.**
 
 ## Starten
 
-Das lokale Build-Paket liegt unter `artifacts/Routenatelier-win-x64.zip`. Entpacken und `RoutePlanner.exe` als normaler Benutzer starten. Die Anwendung ist selbstenthaltend; eine separate .NET-Installation ist nicht nötig. Windows x64 erforderlich. Das Paket ist nicht signiert. Es wurde unter Linux für Windows kompiliert; die Windows-Ausführung ist noch zu prüfen. Sicherheitsfunktionen von Windows nicht abschalten.
+Windows-Builds entstehen unter [GitHub Actions](https://github.com/Fufi1925/fortnite-route-planner/actions): **Windows build and offline checks → erfolgreicher Lauf → Artifacts → Routenatelier-win-x64**. Die Verfügbarkeit hängt vom erfolgreichen CI-Lauf ab. Quellcode und Buildskripte sind vollständig im Repository; generierte EXE-/ZIP-Dateien werden als CI-Artefakte ausgeliefert.
+
+Das selbst gebaute Paket liegt unter `artifacts/Routenatelier-win-x64.zip`. Entpacken und `RoutePlanner.exe` als normaler Benutzer starten. Die Anwendung ist selbstenthaltend; eine separate .NET-Installation ist nicht nötig. Windows x64 erforderlich. Das Paket ist nicht signiert. Der ursprüngliche lokale Build wurde unter Linux für Windows kompiliert; dessen Windows-Ausführung wurde nicht geprüft. Sicherheitsfunktionen von Windows nicht abschalten.
 
 Einrichten aus Quellcode: [.NET SDK 10.0.403](https://dotnet.microsoft.com/download/dotnet/10.0) installieren und unter Windows im Projektordner ausführen:
 
@@ -41,4 +43,4 @@ dotnet run --project tests/RoutePlanner.UiSmoke -c Release  # nur Windows
 
 Die Tests sind eigenständige Programme ohne Testpakete; **`dotnet test` führt diese Tests nicht aus**. Rückgabecode 0 bedeutet Erfolg. Der Windows-Smoke-Test öffnet nur die eigene App mit isoliertem temporärem Datenordner.
 
-Weitere Unterlagen: [Quellen und Compliance](docs/COMPLIANCE_AND_SOURCES.md), [Architektur](docs/ARCHITECTURE.md), [Testbericht](docs/TEST_REPORT.md), [Build und Auslieferung](docs/RELEASE_BUILD.md), [Abhängigkeiten](docs/DEPENDENCIES.md). Die CI ist vorbereitet, aber ohne verbundenes Remote-Repository noch nicht ausgeführt.
+Weitere Unterlagen: [Quellen und Compliance](docs/COMPLIANCE_AND_SOURCES.md), [Architektur](docs/ARCHITECTURE.md), [Testbericht](docs/TEST_REPORT.md), [Build und Auslieferung](docs/RELEASE_BUILD.md), [Abhängigkeiten](docs/DEPENDENCIES.md). Den aktuellen CI-Status und die Download-Artefakte zeigt [GitHub Actions](https://github.com/Fufi1925/fortnite-route-planner/actions).
