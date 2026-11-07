@@ -1,0 +1,32 @@
+$ /tmp/route-dotnet/dotnet run --project tests/RoutePlanner.Tests -c Release
+PASS Segment: senkrechter Abstand
+PASS Segment: Projektion vor/nach Endpunkt
+PASS Segment: degenerierter Abschnitt
+PASS Segment: Punkt exakt auf Strecke
+PASS Route: null und leer
+PASS Route: Einzelpunkt und Nullradius
+PASS Route: nächster Abschnitt und Länge
+PASS Radius: inklusive Grenze, Rundung, außerhalb
+PASS Radius: Wegpunkte statt Korridor
+PASS Planungszustand: leerer Name verhindert keinen Kartenfilter
+PASS Kartengrenzen: Ecken zulässig, NaN/Infinity/außerhalb ungültig
+PASS Index: deterministisch identisch mit vollständiger Suche
+PASS Import/Export: vollständiger Roundtrip
+PASS Mitgelieferte Beispieldatei: importierbar und passende Karte
+PASS Schema: Migration v1 nach v2
+PASS Schema: unbekannte und fehlende Version ablehnen
+PASS Version: alte/fremde Karte warnbar und keine Spawns
+PASS Import: defekt, null, doppelte Schlüssel, fremde Felder
+PASS Import: fehlende Identität und Koordinaten
+PASS Import: ungültige Radien und Enum
+PASS Import: Größen-, Punkt-, Namens- und ID-Limits
+PASS Duplikation: unabhängige Punkte und neue ID
+PASS Speichern/Laden/Löschen: atomarer Dateiaustausch
+PASS Beschädigter Datenträger bleibt nach Load unverändert
+PASS Demo: deterministische Events und echte Reducer-Integration
+PASS Demo: Start fehlt, Zeit rückwärts, Position ungültig
+PROFILE index=10.2ms query-mean=13.33ms managed=16.8MiB working-set=70.3MiB
+PASS Performance: 100.000 Punkte / 100 Filter, Referenzergebnis
+RESULT 27 passed; 0 failed
+
+EXIT 0

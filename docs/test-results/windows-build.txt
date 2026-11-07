@@ -1,0 +1,15 @@
+$ /tmp/route-dotnet/dotnet build tests/RoutePlanner.UiSmoke -c Release
+  Determining projects to restore...
+  Restored /workspace/fortnite-route-overlay/src/RoutePlanner.App/RoutePlanner.App.csproj (in 236 ms).
+  2 of 3 projects are up-to-date for restore.
+  RoutePlanner.Core -> /workspace/fortnite-route-overlay/src/RoutePlanner.Core/bin/Release/net10.0/RoutePlanner.Core.dll
+  RoutePlanner.App -> /workspace/fortnite-route-overlay/src/RoutePlanner.App/bin/Release/net10.0-windows/RoutePlanner.dll
+  RoutePlanner.UiSmoke -> /workspace/fortnite-route-overlay/tests/RoutePlanner.UiSmoke/bin/Release/net10.0-windows/RoutePlanner.UiSmoke.dll
+
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:04.26
+
+EXIT 0

@@ -1,0 +1,21 @@
+<Window x:Class="RoutePlanner.App.CompactWindow"
+ xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+ xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+ xmlns:local="clr-namespace:RoutePlanner.App"
+ Title="DEMO · Kompakte Route" Width="390" Height="520" MinWidth="320" MinHeight="410"
+ ResizeMode="CanResizeWithGrip" ShowInTaskbar="True" Opacity="0.97">
+ <Grid Margin="14">
+  <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+  <StackPanel><TextBlock Text="OFFLINE / DEMO" FontWeight="Bold" Foreground="#BDC5CD"/>
+   <TextBlock x:Name="RouteTitle" FontSize="18" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Margin="0,6,0,2"/>
+   <TextBlock x:Name="Metrics" TextWrapping="Wrap" Foreground="#A3ADB5" Margin="0,0,0,8"/>
+  </StackPanel>
+  <local:MapView x:Name="CompactMap" Grid.Row="1" Editable="False" ToolTip="Rechts ziehen: Karte bewegen · Mausrad: Zoom · Zum Bearbeiten zurück zur Planung" AutomationProperties.AutomationId="CompactMap"/>
+  <StackPanel Grid.Row="2" Margin="0,10,0,0">
+   <TextBlock Text="○ Möglicher Demo-Spawn · □ manuell bestätigt (Demo)" FontSize="11" TextWrapping="Wrap"/>
+   <TextBlock Text="Keine Live-Daten. Nur über neutraler Testanwendung verwenden." TextWrapping="Wrap" Foreground="#A3ADB5" FontSize="11" Margin="0,5,0,3"/>
+   <CheckBox Content="Immer oben (normales Testfenster)" Checked="TopmostChanged" Unchecked="TopmostChanged" AutomationProperties.AutomationId="Topmost"/>
+   <DockPanel><Button Content="Zur Planung" Click="ReturnToPlanner"/><Button Content="Oben rechts" Click="ResetPosition"/></DockPanel>
+  </StackPanel>
+ </Grid>
+</Window>

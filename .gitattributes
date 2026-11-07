@@ -1,0 +1,2 @@
+# Preserve upstream license notices; their original whitespace is intentional.
+third-party/*.txt -whitespace

@@ -1,0 +1,9 @@
+$ /tmp/route-dotnet/dotnet publish src/RoutePlanner.App -c Release -r win-x64 --self-contained true -p:RuntimeFrameworkVersion=10.0.14 -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -p:PublishTrimmed=false -p:PublishReadyToRun=false -o artifacts/win-x64
+  Determining projects to restore...
+  Restored /workspace/fortnite-route-overlay/src/RoutePlanner.Core/RoutePlanner.Core.csproj (in 388 ms).
+  Restored /workspace/fortnite-route-overlay/src/RoutePlanner.App/RoutePlanner.App.csproj (in 385 ms).
+  RoutePlanner.Core -> /workspace/fortnite-route-overlay/src/RoutePlanner.Core/bin/Release/net10.0/RoutePlanner.Core.dll
+  RoutePlanner.App -> /workspace/fortnite-route-overlay/src/RoutePlanner.App/bin/Release/net10.0-windows/win-x64/RoutePlanner.dll
+  RoutePlanner.App -> /workspace/fortnite-route-overlay/artifacts/win-x64/
+
+EXIT 0

@@ -1,0 +1,52 @@
+name: Windows build and offline checks
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/fortnite-route-overlay]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.403'
+      - name: Core tests and performance sample
+        shell: pwsh
+        run: |
+          New-Item artifacts -ItemType Directory -Force | Out-Null
+          dotnet run --project tests/RoutePlanner.Tests -c Release 2>&1 | Tee-Object artifacts/core-tests.txt
+          if ($LASTEXITCODE -ne 0) { throw 'Core tests failed' }
+      - name: WPF smoke on isolated demo data
+        shell: pwsh
+        run: |
+          dotnet run --project tests/RoutePlanner.UiSmoke -c Release 2>&1 | Tee-Object artifacts/ui-smoke.txt
+          if ($LASTEXITCODE -ne 0) { throw 'WPF smoke failed' }
+      - name: Publish portable Windows x64 bundle
+        shell: pwsh
+        run: ./scripts/publish.ps1
+      - name: Upload Windows build
+        uses: actions/upload-artifact@v4
+        with:
+          name: Routenatelier-win-x64
+          path: |
+            artifacts/Routenatelier-win-x64.zip
+            artifacts/Routenatelier-win-x64.zip.sha256
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload verification logs and WPF screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: offline-verification
+          path: |
+            artifacts/*.txt
+            artifacts/ui-smoke/
+          if-no-files-found: warn
+          retention-days: 14

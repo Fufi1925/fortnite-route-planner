@@ -1,0 +1,62 @@
+{
+  "checkedUtc": "2026-11-07",
+  "method": "HTTPS GET via configured proxy; HTML text read; no game or GEP runtime test",
+  "sources": [
+    {
+      "name": "epic-tos",
+      "url": "https://legal.epicgames.com/epicgames/tos",
+      "httpStatus": 200,
+      "bytes": 434051,
+      "htmlSha256": "2d0e0f222f11dab68002a983cffbb990140b246e900999631c692b95a8548323"
+    },
+    {
+      "name": "epic-support",
+      "url": "https://www.epicgames.com/help/c-34254770/c-40491939/a15028164?lang=de",
+      "httpStatus": 200,
+      "bytes": 319798,
+      "htmlSha256": "75a25d0f2826a09d781351d3c71b001862131b1454430ffa4c7c9b4b6d542d5e"
+    },
+    {
+      "name": "fortnite-gep",
+      "url": "https://dev.overwolf.com/ow-native/live-game-data-gep/supported-games/fortnite/",
+      "httpStatus": 200,
+      "bytes": 227648,
+      "htmlSha256": "bfead52f5fde524533f6d5a64745432f5dc1955c125c1a22a47531b73b0eca74"
+    },
+    {
+      "name": "gep-intro",
+      "url": "https://dev.overwolf.com/ow-native/live-game-data-gep/live-game-data-gep-intro/",
+      "httpStatus": 200,
+      "bytes": 41781,
+      "htmlSha256": "beb3324da8444ddd66df1df80018e5d875a39e8555ab5b5dee7b34e024bd3f4d"
+    },
+    {
+      "name": "tracker",
+      "url": "https://tracker.gg/fortnite/desktop-app/",
+      "httpStatus": 200,
+      "bytes": 128892,
+      "htmlSha256": "ce37152bcc1c971422d5765183e29e43e7915e6fe5e608bc7b1dc16dc1487c8d"
+    },
+    {
+      "name": "overwolf-terms",
+      "url": "https://legal.overwolf.com/docs/overwolf/developers/developer-terms",
+      "httpStatus": 200,
+      "bytes": 95507,
+      "htmlSha256": "041b0c2d7cd9818008defbe6886b685a5cf0560e4e66249fe4fad263c8428a74"
+    },
+    {
+      "name": "overwolf-onboarding",
+      "url": "https://dev.overwolf.com/ow-native/getting-started/overview/",
+      "httpStatus": 200,
+      "bytes": 30926,
+      "htmlSha256": "33045f22d4c7960616dd6620726e6f8dbe40e15353267ba8225a3eb3e6dc1b00"
+    },
+    {
+      "name": "overwolf-electron",
+      "url": "https://dev.overwolf.com/ow-electron/getting-started/overview/",
+      "httpStatus": 200,
+      "bytes": 31455,
+      "htmlSha256": "8492da040f7ce269764e0c802d059698f44aada18ec8d43909c36e5e7b04906a"
+    }
+  ]
+}
