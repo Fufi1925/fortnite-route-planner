@@ -4,7 +4,7 @@ Stand: 2026-11-07. Lokale Umgebung Linux x64, SDK 10.0.403. Windows-Lauf, Screen
 
 ## Lokal tatsächlich ausgeführt
 
-- `dotnet run --project tests/RoutePlanner.Tests -c Release`: 30 erfolgreiche Prüfungen, 0 Fehler.
+- `dotnet run --project tests/RoutePlanner.Tests -c Release`: 31 erfolgreiche Prüfungen, 0 Fehler.
 - `dotnet build tests/RoutePlanner.UiSmoke -c Release --no-restore`: Windows-UI-Test und Anwendung kompiliert.
 - `python3 scripts/audit-source.py`: ergänzende Prüfung von Anwendungsdateien, Manifest und Abhängigkeiten.
 
@@ -12,7 +12,7 @@ Die vollständigen Ausgaben stehen in `docs/test-results/core-tests.txt`, `windo
 
 ## Kernprüfungen
 
-Distanz zu Segmenten mit Projektion/Endpunkten/Nullsegmenten, leere Routen und Nullradius, inklusive Radiusgrenze und Rechentoleranz, Kartenlimits, Wegpunkt-/Korridormodus, Index gegen vollständige Suche, JSON-Roundtrip und Validierungsfälle, Schema-1/2-Migration ohne Übernahme simulierter Historie, passende Kartenkennung, atomare Dateiaustausche, Erhalt beschädigter Dateien, unabhängige Duplikation, Karten-/Ortsdaten inklusive ungültiger Pfade und Quellen sowie echte manuelle Routensitzung mit expliziten Fortschritten und gemessener Zeit. Eine Prüfung kontrolliert die ausschließlich monochrome Anwendungsfarbpalette. Testdaten existieren nur innerhalb der Testprogramme, nicht als automatisch geladene Produktdaten.
+Distanz zu Segmenten mit Projektion/Endpunkten/Nullsegmenten, leere Routen und Nullradius, inklusive Radiusgrenze und Rechentoleranz, Kartenlimits, Wegpunkt-/Korridormodus, Index gegen vollständige Suche, JSON-Roundtrip und Validierungsfälle, Schema-1/2-Migration ohne Übernahme simulierter Historie, passende Kartenkennung, atomare Dateiaustausche, Erhalt beschädigter Dateien, unabhängige Duplikation, Karten-/Ortsdaten inklusive ungültiger Pfade und Quellen sowie echte manuelle Routensitzung mit expliziten Fortschritten und gemessener Zeit. Die Routenidentität bleibt bei Namensänderungen und UI-Bindungen stabil. Eine Prüfung kontrolliert die ausschließlich monochrome Anwendungsfarbpalette. Testdaten existieren nur innerhalb der Testprogramme, nicht als automatisch geladene Produktdaten.
 
 Der Leistungstest verarbeitet 100.000 Testpunkte und 100 Filterabfragen. Messwerte stehen im Protokoll und beziehen sich auf den Kern, nicht auf eine reale Fortnite-Partie oder das WPF-Gesamtbudget.
 

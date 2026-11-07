@@ -20,6 +20,9 @@ public sealed record RoutePlan : INotifyPropertyChanged
         }
     }
     public event PropertyChangedEventHandler? PropertyChanged;
+    // An editable route is an entity: its selection identity must not change with its name or UI event subscriptions.
+    public bool Equals(RoutePlan? other) => other is not null && Id == other.Id;
+    public override int GetHashCode() => Id.GetHashCode();
     public string MapVersion { get; init; } = MapSpace.WorkspaceId;
     public double Radius { get; set; } = 110;
     public RadiusMode RadiusMode { get; set; }

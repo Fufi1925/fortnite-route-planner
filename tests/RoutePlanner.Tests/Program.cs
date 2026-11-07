@@ -112,6 +112,12 @@ Check("Duplikation: unabhängige Punkte und neue ID", () => {
     var original=Line();var copy=original.Copy(true);copy.Points[0]=new(10,10);
     True(original.Id!=copy.Id&&original.Points[0]==new MapPoint(0,0));
 });
+Check("Routenidentität bleibt beim Umbenennen und bei UI-Bindungen stabil", () => {
+    var route=Line();HashSet<RoutePlan> selected=[route];int hash=route.GetHashCode();
+    route.PropertyChanged+=(_,_)=>{};route.Name="Umbenannt";
+    True(route.GetHashCode()==hash&&selected.Contains(route)&&selected.Contains(route.Copy()));
+    True(!selected.Contains(route.Copy(true)));
+});
 Check("Speichern/Laden/Löschen: atomarer Dateiaustausch", () => {
     var directory=Path.Combine(Path.GetTempPath(),"route-tests-"+Guid.NewGuid());
     try {

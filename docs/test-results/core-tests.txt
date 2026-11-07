@@ -1,4 +1,4 @@
-$ /tmp/route-dotnet/dotnet run --project tests/RoutePlanner.Tests -c Release
+$ dotnet run --project tests/RoutePlanner.Tests -c Release
 PASS Segment: senkrechter Abstand
 PASS Segment: Projektion vor/nach Endpunkt
 PASS Segment: degenerierter Abschnitt
@@ -20,6 +20,7 @@ PASS Import: fehlende Identität und Koordinaten
 PASS Import: ungültige Radien und Enum
 PASS Import: Größen-, Punkt-, Namens- und ID-Limits
 PASS Duplikation: unabhängige Punkte und neue ID
+PASS Routenidentität bleibt beim Umbenennen und bei UI-Bindungen stabil
 PASS Speichern/Laden/Löschen: atomarer Dateiaustausch
 PASS Beschädigter Datenträger bleibt nach Load unverändert
 PASS Manueller Routengang: nur Aktionen und gemessene Zeit
@@ -28,8 +29,8 @@ PASS Karten und Orte: echte Einträge speichern und passend filtern
 PASS Karten: Pfade, fehlende Metadaten und falsche Orte ablehnen
 PASS Keine automatischen Daten bei neuem Start
 PASS Palette: nur Schwarz, Weiß und Grau in der Anwendungsoberfläche
-PROFILE index=7.5ms query-mean=11.85ms managed=23.0MiB working-set=88.8MiB
+PROFILE index=7.5ms query-mean=9.68ms managed=22.4MiB working-set=83.0MiB
 PASS Performance: 100.000 Punkte / 100 Filter, Referenzergebnis
-RESULT 30 passed; 0 failed
+RESULT 31 passed; 0 failed
 
 EXIT 0
