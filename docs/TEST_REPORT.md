@@ -1,6 +1,6 @@
 # Testbericht 0.3
 
-Stand: 2026-11-07. Lokale Umgebung Linux x64, SDK 10.0.403. Windows-Lauf, Screenshots und Start der veröffentlichten EXE erfolgen anschließend über den [Windows-Workflow](https://github.com/Fufi1925/fortnite-route-planner/actions). Maßgeblich sind dessen tatsächliche Ausgaben und das Artefakt `offline-verification`; eine bloße Kompilierung wird nicht als Windows-Ausführung ausgegeben.
+Stand: 2026-11-07. Lokale Umgebung Linux x64, SDK 10.0.403. Der [Windows-Lauf 42356295734](https://github.com/Fufi1925/fortnite-route-planner/actions/runs/42356295734) hat 42 Kernprüfungen, den WPF-Test inklusive tatsächlichem HTTPS-Kartenabruf und den Start der selbstenthaltenden EXE erfolgreich ausgeführt. Die echte Screenshot-Abnahme führte anschließend zu höherem Kartenkontrast. Für das endgültige Release sind erneut dessen erfolgreiche CI-Ausgaben und das Artefakt `offline-verification` maßgeblich; eine bloße Kompilierung wird nicht als Windows-Ausführung ausgegeben.
 
 ## Lokal tatsächlich ausgeführt
 
@@ -8,7 +8,7 @@ Stand: 2026-11-07. Lokale Umgebung Linux x64, SDK 10.0.403. Windows-Lauf, Screen
 - `dotnet build tests/RoutePlanner.UiSmoke -c Release --no-restore`: Windows-UI-Test und Anwendung kompiliert.
 - `python3 scripts/audit-source.py`: ergänzende Prüfung von Anwendungsdateien, Manifest und Abhängigkeiten.
 
-Die vollständigen Ausgaben stehen in `docs/test-results/core-tests.txt`, `windows-build.txt` und `source-audit.txt`. Das ältere `windows-publish.txt` dokumentiert den ursprünglichen Publish-Lauf; für den 0.2-Build sind ausschließlich die neuen CI-Ausgaben maßgeblich.
+Die vollständigen lokalen Ausgaben stehen in `docs/test-results/core-tests.txt`, `windows-build.txt` und `source-audit.txt`. Das ältere `windows-publish.txt` dokumentiert den ursprünglichen Publish-Lauf; für den 0.3-Build sind ausschließlich die neuen CI-Ausgaben maßgeblich.
 
 ## Kernprüfungen
 

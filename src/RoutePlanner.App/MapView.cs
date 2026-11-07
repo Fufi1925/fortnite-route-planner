@@ -63,7 +63,7 @@ public sealed class MapView : FrameworkElement
         dc.DrawRectangle(Water, null, new Rect(0, 0, 3000, 3000));
         if (MapImage is not null)
         {
-            dc.PushOpacity(.32); dc.DrawImage(MapImage, new Rect(0, 0, 3000, 3000)); dc.Pop();
+            dc.PushOpacity(.82); dc.DrawImage(MapImage, new Rect(0, 0, 3000, 3000)); dc.Pop();
         }
         for (int i = 0; i <= 3000; i += 300)
         {
