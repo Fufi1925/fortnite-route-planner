@@ -1,12 +1,25 @@
+using System.ComponentModel;
+
 namespace RoutePlanner.Core;
 
 public readonly record struct MapPoint(double X, double Y);
 public enum RadiusMode { Corridor, Waypoints }
 
-public sealed record RoutePlan
+public sealed record RoutePlan : INotifyPropertyChanged
 {
     public Guid Id { get; init; } = Guid.NewGuid();
-    public string Name { get; set; } = "Neue Route";
+    private string name = "Neue Route";
+    public string Name
+    {
+        get => name;
+        set
+        {
+            if (name == value) return;
+            name = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Name)));
+        }
+    }
+    public event PropertyChangedEventHandler? PropertyChanged;
     public string MapVersion { get; init; } = MapSpace.WorkspaceId;
     public double Radius { get; set; } = 110;
     public RadiusMode RadiusMode { get; set; }
