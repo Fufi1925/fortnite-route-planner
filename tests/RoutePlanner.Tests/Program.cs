@@ -1,5 +1,7 @@
 using System.Diagnostics;
 using System.Text;
+using System.Net;
+using System.Net.Http;
 using RoutePlanner.Core;
 
 int passed = 0, failed = 0;
@@ -70,13 +72,13 @@ Check("Import/Export: vollständiger Roundtrip", () => {
     var doc=RouteJson.Parse(RouteJson.Serialize(new() {Routes=[r]}));
     True(doc.Routes[0].Id==r.Id&&doc.Routes[0].Name==r.Name&&doc.Routes[0].Points.SequenceEqual(r.Points));
 });
-Check("Schema: Migration v1/v2 nach v3 ohne simulierten Verlauf", () => {
-    foreach(int version in new[]{1,2}) {
-        var text=Json(Line()).Replace("\"schemaVersion\": 3","\"schemaVersion\": "+version);
+Check("Schema: Migration v1/v2/v3 nach v4 ohne simulierten Verlauf", () => {
+    foreach(int version in new[]{1,2,3}) {
+        var text=Json(Line()).Replace("\"schemaVersion\": 4","\"schemaVersion\": "+version);
         var node=System.Text.Json.Nodes.JsonNode.Parse(text)!.AsObject();
-        node["demoHistory"]=new System.Text.Json.Nodes.JsonArray(new System.Text.Json.Nodes.JsonObject { ["simulated"]=true });
+        if(version<3) node["demoHistory"]=new System.Text.Json.Nodes.JsonArray(new System.Text.Json.Nodes.JsonObject { ["simulated"]=true });
         var doc=RouteJson.Parse(Enc(node.ToJsonString()));
-        True(doc.SchemaVersion==3&&doc.Activities.Count==0&&doc.Routes.Count==1);
+        True(doc.SchemaVersion==4&&doc.Activities.Count==0&&doc.Routes.Count==1);
         True(!Encoding.UTF8.GetString(RouteJson.Serialize(doc)).Contains("demoHistory"));
     }
 });
@@ -167,6 +169,67 @@ Check("Karten: Pfade, fehlende Metadaten und falsche Orte ablehnen", () => {
 Check("Keine automatischen Daten bei neuem Start", () => {
     var doc=new LibraryDocument();True(doc.Routes.Count==0&&doc.Maps.Count==0&&doc.Activities.Count==0);
 });
+Check("Bereich: Normalisierung, inklusive Kanten und Außenpunkte", () => {
+    var area=SearchArea.FromCorners(new(200,300),new(10,20));
+    True(area==new SearchArea(10,20,200,300));True(area.Contains(new(10,20))&&area.Contains(new(200,300)));
+    True(!area.Contains(new(9.999,20))&&!area.Contains(new(double.NaN,20)));
+});
+Check("Bereich: filtern ohne Wegpunkte, Radius wird nicht zusätzlich angewendet", () => {
+    var index=new SpawnIndex([new("inside",new(100,100)),new("edge",new(200,200)),new("out",new(201,200))]);
+    var route=new RoutePlan {Area=new(50,50,200,200),Radius=0};
+    True(index.Query(route).Select(p=>p.Id).SequenceEqual(new[]{"edge","inside"}));
+    True(index.Query(route with {MapVersion="OTHER"}).Count==0);
+});
+Check("Bereich: null stellt Radiusfilter wieder her", () => {
+    var route=Line() with {Area=new(0,0,200,200)};var index=new SpawnIndex([new("p",new(150,150))]);
+    True(index.Query(route).Count==1);route.Area=null;True(index.Query(route).Count==0);
+});
+Check("Bereich: ungültige Werte und leere Fläche ablehnen", () => {
+    foreach(var area in new[]{new SearchArea(0,0,0,10),new(20,0,10,10),new(-1,0,10,10),new(0,0,3001,20),new(0,0,double.NaN,10)})
+        Reject(()=>Validation.Route(Line() with {Area=area}));
+});
+Check("Bereich: Kopie und JSON erhalten Koordinaten", () => {
+    var route=Line() with {Area=new(0,10,100,500)};True(route.Copy(true).Area==route.Area);
+    True(RouteJson.Parse(Enc(Json(route))).Routes.Single().Area==route.Area);
+    Reject(()=>RouteJson.Parse(Enc(Json(route).Replace("\"top\": 10,",""))));
+});
+Check("Kartenabruf: nur dokumentierte HTTPS-Ziele und keine Truhenwerte", () => {
+    using var handler=new StubMapHandler(PublicMapContract.ImageUrl);using var client=new PublicFortniteMapClient(handler);
+    var result=client.DownloadAsync().GetAwaiter().GetResult();
+    True(handler.Requests.SequenceEqual(new[]{PublicMapContract.ApiUrl,PublicMapContract.ImageUrl}));
+    True(result.ImageBytes.Take(8).SequenceEqual(new byte[]{137,80,78,71,13,10,26,10})&&result.RetrievedAtUtc> DateTimeOffset.MinValue);
+});
+Check("Kartenabruf: fremdes Bildziel und lokale Adressen ablehnen", () => {
+    foreach(var address in new[]{"https://other.example/map.png","http://127.0.0.1/private","https://fortnite-api.com/other.png"}) {
+        using var handler=new StubMapHandler(address);using var client=new PublicFortniteMapClient(handler);
+        Reject(()=>client.DownloadAsync().GetAwaiter().GetResult());True(handler.Requests.Count==1);
+    }
+});
+Check("Kartenabruf: Fehler und Weiterleitung ohne Wiederholung", () => {
+    foreach(var status in new[]{HttpStatusCode.TooManyRequests,HttpStatusCode.Redirect,HttpStatusCode.ServiceUnavailable}) {
+        using var handler=new StubMapHandler(PublicMapContract.ImageUrl,status);using var client=new PublicFortniteMapClient(handler);
+        bool rejected=false;try{client.DownloadAsync().GetAwaiter().GetResult();}catch(IOException){rejected=true;}
+        True(rejected&&handler.Requests.Count==1);
+    }
+});
+Check("Kartenabruf: Retry-After verhindert weitere Anfragen", () => {
+    using var handler=new StubMapHandler(PublicMapContract.ImageUrl,HttpStatusCode.TooManyRequests,retrySeconds:3600);
+    using var client=new PublicFortniteMapClient(handler);
+    for(int i=0;i<2;i++) {try{client.DownloadAsync().GetAwaiter().GetResult();}catch(IOException){}}
+    True(handler.Requests.Count==1);
+});
+Check("Kartenabruf: ungültiges Bild und übergroße Antwort ablehnen", () => {
+    foreach(var bytes in new[]{Encoding.UTF8.GetBytes("not a PNG"),new byte[20*1024*1024+1]}) {
+        using var handler=new StubMapHandler(PublicMapContract.ImageUrl,image:bytes);using var client=new PublicFortniteMapClient(handler);
+        Reject(()=>client.DownloadAsync().GetAwaiter().GetResult());
+    }
+});
+Check("Kartenquelle: Metadaten und Abrufdatum bleiben nachvollziehbar", () => {
+    var map=new MapAsset {Id="MAP-"+new string('a',64),Name="Fortnite-Karte",Source="Fortnite-API",SourceUrl=PublicMapContract.ApiUrl,RetrievedAtUtc=DateTimeOffset.UtcNow};
+    var restored=RouteJson.Parse(RouteJson.Serialize(new(){Maps=[map]})).Maps.Single();True(restored.IsPublicFortniteMap&&restored.RetrievedAtUtc==map.RetrievedAtUtc);
+    Reject(()=>Validation.Map(map with {SourceUrl="https://private.example/api"}));
+    Reject(()=>Validation.Map(map with {RetrievedAtUtc=null}));
+});
 Check("Palette: nur Schwarz, Weiß und Grau in der Anwendungsoberfläche", () => {
     var paths=Directory.GetFiles("src/RoutePlanner.App","*.xaml").Concat(new[]{"src/RoutePlanner.App/MapView.cs","src/RoutePlanner.App/Dialogs.cs"});
     foreach(var path in paths) foreach(System.Text.RegularExpressions.Match match in System.Text.RegularExpressions.Regex.Matches(File.ReadAllText(path),"#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?(?![0-9A-Fa-f])")) {
@@ -188,4 +251,19 @@ static class TestFixtures
 {
     public static IReadOnlyList<SpawnPoint> Spawns {get;}=Enumerable.Range(0,600).Select(i=>new SpawnPoint(i.ToString(),new(100+(i*947+73)%2800,100+(i*613+181)%2800))).ToArray();
     public static RoutePlan Route()=>new(){Name="Teststrecke",Points=[new(600,2400),new(900,1900),new(1450,1600),new(1700,950),new(2400,650)]};
+}
+
+sealed class StubMapHandler(string imageUrl,HttpStatusCode status=HttpStatusCode.OK,byte[]? image=null,int? retrySeconds=null):HttpMessageHandler
+{
+    public List<string> Requests {get;}=[];
+    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,CancellationToken ct)
+    {
+        Requests.Add(request.RequestUri!.AbsoluteUri);
+        if(Requests.Count==1) {
+            var response=new HttpResponseMessage(status) {Content=new StringContent(System.Text.Json.JsonSerializer.Serialize(new {status=200,data=new {images=new {blank=imageUrl}}}))};
+            if(retrySeconds is int seconds) response.Headers.RetryAfter=new System.Net.Http.Headers.RetryConditionHeaderValue(TimeSpan.FromSeconds(seconds));
+            return Task.FromResult(response);
+        }
+        return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) {Content=new ByteArrayContent(image ?? new byte[]{137,80,78,71,13,10,26,10,0,0,0,0})});
+    }
 }

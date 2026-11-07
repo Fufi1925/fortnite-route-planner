@@ -1,8 +1,8 @@
-# Architektur 0.2
+# Architektur 0.3
 
 ## Komponenten
 
-`RoutePlanner.Core`: typisierte Routen, Kartendefinitionen und Orte, reine Geometrie, räumlicher Spawnindex, JSON-Validierung, atomare Dateispeicherung und `ManualRouteSession`. Keine UI-, Netzwerk- oder Spielprozessabhängigkeit. Der frühere Demo-Provider ist entfernt.
+`RoutePlanner.Core`: typisierte Routen, Kartendefinitionen und Orte, reine Geometrie, räumlicher Spawnindex, JSON-Validierung, atomare Dateispeicherung und `ManualRouteSession`. Keine UI- oder Spielprozessabhängigkeit. Der einzige getrennte Netzwerk-Client ruft öffentliche statische Kartenbilder ab. Der frühere Demo-Provider ist entfernt.
 
 `RoutePlanner.App`: WPF ohne Drittanbieter-Pakete. `MainWindow` verwaltet die Planung; `MapView` zeichnet freie Arbeitsfläche beziehungsweise eigenes Kartenbild und Routen. `MapImages` validiert und normalisiert lokale Bilder. `CompactWindow` zeigt die Route und registriert ausschließlich bewusste manuelle Bestätigungen. `Dialogs` liefert dunkle eigene Bestätigungen. Gewöhnliches WindowChrome, keine Spiel-Hooks. `App.OpenPlannerOnStartup` erlaubt den isolierten UI-Test ohne zweite Anwendungsinstanz.
 
@@ -22,12 +22,18 @@ Bildschirm = Welt × Maßstab + Offset; Maßstab min(Breite,Höhe)/3240 × Zoom.
 
 ## Speicherung und Migration
 
-Schema 3 enthält `routes`, `maps` und `activities`. Maximal 2 MiB JSON, Tiefe 20, doppelte Schlüssel und fremde Felder abgelehnt. Identität, Kartenkennung, endliche Koordinaten und Datenmengen validiert. Schreiben über temporäre Datei im selben Ordner, Datenträger-Flush und Ersetzen; kein Schutzversprechen gegen jeden Hardwareausfall. Beschädigte Startbibliothek bleibt vor automatischem Überschreiben gesperrt.
+Schema 4 enthält `routes`, `maps` und `activities`. Maximal 2 MiB JSON, Tiefe 20, doppelte Schlüssel und fremde Felder abgelehnt. Identität, Kartenkennung, endliche Koordinaten und Datenmengen validiert. Schreiben über temporäre Datei im selben Ordner, Datenträger-Flush und Ersetzen; kein Schutzversprechen gegen jeden Hardwareausfall. Beschädigte Startbibliothek bleibt vor automatischem Überschreiben gesperrt.
 
-Schema 1/2: Routen bleiben erhalten, simuliertes `demoHistory` wird nicht als echter Verlauf migriert. Historische Beispielrouten bleiben gespeichert, werden aber nicht automatisch angezeigt oder gestartet. Sichern geschieht erst bei bewusster Speicheraktion; vorher bleibt die alte Datei erhalten. Bilder sind separate lokale Dateien. Kein automatisches Backup und keine Konfliktauflösung zwischen mehreren Instanzen.
+Schema 1/2/3: Routen bleiben erhalten, simuliertes `demoHistory` wird nicht als echter Verlauf migriert. Historische Beispielrouten bleiben gespeichert, werden aber nicht automatisch angezeigt oder gestartet. Sichern geschieht erst bei bewusster Speicheraktion; vorher bleibt die alte Datei erhalten. Bilder sind separate lokale Dateien. Kein automatisches Backup und keine Konfliktauflösung zwischen mehreren Instanzen.
 
 ## Tatsächliche manuelle Routengänge
 
 `ManualRouteSession` erstellt eine Routenkopie und misst die vergangene Uhrzeit. Ein Wegpunkt wird ausschließlich durch die Aktion „Wegpunkt erreicht“ bestätigt. Kein Timer erzeugt Positionen oder Fortschritte. Gespeichert werden Anfangszeit, tatsächliche Dauer (begrenzt auf 24 Stunden), bestätigte/gesamte Wegpunkte, Abschlussstatus und ausdrücklich **geplante** Streckenlänge. Diese Länge behauptet keine gemessene Spielerbewegung. Abbrüche bleiben als beendet markiert. Bei Schreibfehler bleibt der noch ungespeicherte Verlauf im Speicher für einen erneuten Speicherversuch.
 
 Keine Live-API, automatische Truhensuche, Bildschirmaufnahme/OCR oder Spielsteuerung. Der UI-Timer aktualisiert ausschließlich die Anzeige der tatsächlichen vergangenen Zeit.
+
+## Öffentliche Karte und Suchbereich
+
+PublicFortniteMapClient erlaubt genau das dokumentierte HTTPS-JSON und das feste PNG-Bildziel von Fortnite-API. Keine Weiterleitung, integrierten Kontozugangsdaten oder Live-Match-Daten. Gesamtzeitlimit 25 Sekunden, JSON maximal 2 MiB, Bild maximal 20 MiB; HTTP-Fehler und Retry-After werden ohne automatische Wiederholung respektiert. Provider-Abrufzeit und Bilddatum werden getrennt gespeichert. Eigene Routen und Karten bleiben bei einem Abruffehler erhalten. Ein neues Kartenbild erhält eine eigene Inhaltskennung; alte Routen werden nicht umprojiziert.
+
+RoutePlan.Area ist ein optionales normiertes Rechteck. Positive Fläche, endliche Werte und Kartengrenzen werden validiert. Auswahl im MapView über den vorhandenen Zoom-/Pan-Transform; Ziehen in jede Richtung wird normalisiert. Ein Bereich ersetzt den Radiusfilter und funktioniert ohne Wegpunkte. Die Query filtert nur tatsächlich gespeicherte Orte der passenden Karte. Alle-Orte-Modus ist während eines Bereichs deaktiviert. Export, Duplikation, Schema-Migration und Kompaktansicht erhalten den Bereich. Keine Generierung fehlender Truhen.

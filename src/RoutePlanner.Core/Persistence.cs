@@ -21,6 +21,9 @@ public static class Validation
         if (!Enum.IsDefined(route.RadiusMode)) throw new InvalidDataException("Unbekannter Radiusmodus.");
         if (route.Points is null || route.Points.Count > 500 || route.Points.Any(p => !Geometry.IsOnMap(p)))
             throw new InvalidDataException("Maximal 500 Wegpunkte innerhalb 0…3000 erlaubt.");
+        if (route.Area is { } area && (!Geometry.IsOnMap(new(area.Left,area.Top)) || !Geometry.IsOnMap(new(area.Right,area.Bottom))
+            || area.Right <= area.Left || area.Bottom <= area.Top))
+            throw new InvalidDataException("Suchbereich muss innerhalb der Karte liegen und eine positive Fläche haben.");
     }
     public static void Text(string? text, int max, string label)
     {
@@ -29,7 +32,7 @@ public static class Validation
     }
     public static void Library(LibraryDocument document)
     {
-        if (document.SchemaVersion != 3 || document.Routes is null || document.Maps is null || document.Activities is null
+        if (document.SchemaVersion != 4 || document.Routes is null || document.Maps is null || document.Activities is null
             || document.Routes.Count > 200 || document.Maps.Count > 100 || document.Activities.Count > 200)
             throw new InvalidDataException("Bibliothek: ungültige Version oder zu viele Einträge.");
         foreach (var route in document.Routes) Route(route);
@@ -54,6 +57,8 @@ public static class Validation
         if (map is null || map.Id is null || map.Id != MapSpace.WorkspaceId && !Regex.IsMatch(map.Id, "^MAP-[a-f0-9]{64}$"))
             throw new InvalidDataException("Ungültige Karten-ID.");
         Text(map.Name, 120, "Kartenname"); Text(map.Source, 200, "Quelle");
+        if (map.SourceUrl is not null && (map.SourceUrl != PublicMapContract.ApiUrl || !map.HasImage || map.RetrievedAtUtc is null))
+            throw new InvalidDataException("Ungültige öffentliche Kartenquelle.");
         if (map.Spawns is null || map.Spawns.Count > 10000) throw new InvalidDataException("Maximal 10.000 Orte pro Karte.");
         foreach (var point in map.Spawns)
         {
@@ -89,11 +94,12 @@ public static class RouteJson
             using var json = JsonDocument.Parse(bytes, new() { MaxDepth = 20 });
             RejectDuplicateKeys(json.RootElement);
             if (!json.RootElement.TryGetProperty("schemaVersion", out var version)
-                || !version.TryGetInt32(out int schema) || schema is not (1 or 2 or 3))
+                || !version.TryGetInt32(out int schema) || schema is not (1 or 2 or 3 or 4))
                 throw new InvalidDataException("Unbekannte oder fehlende Schemaversion.");
             // Preserve old routes but never turn their simulated history into real activities.
             var node = JsonNode.Parse(bytes)!.AsObject();
-            if (schema < 3) { node.Remove("demoHistory"); node["schemaVersion"] = 3; }
+            if (schema < 3) node.Remove("demoHistory");
+            if (schema < 4) node["schemaVersion"] = 4;
             var doc = node.Deserialize<LibraryDocument>(Options)
                 ?? throw new InvalidDataException("Leere Bibliothek.");
             // Required route identity/version must come from the file, never from model defaults.
@@ -104,6 +110,9 @@ public static class RouteJson
                 foreach (var p in r.GetProperty("points").EnumerateArray())
                     if (!p.TryGetProperty("x", out _) || !p.TryGetProperty("y", out _))
                         throw new InvalidDataException("Wegpunkt benötigt x und y.");
+                if (r.TryGetProperty("area", out var selectedArea) && selectedArea.ValueKind != JsonValueKind.Null)
+                    foreach (var field in new[] { "left", "top", "right", "bottom" })
+                        if (!selectedArea.TryGetProperty(field, out _)) throw new InvalidDataException($"Bereichsfeld {field} fehlt.");
             }
             if (json.RootElement.TryGetProperty("maps", out var maps))
                 foreach (var map in maps.EnumerateArray())

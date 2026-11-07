@@ -16,6 +16,11 @@ public partial class MainWindow : Window
 {
     private readonly LocalStore store;
     private readonly MapImages images;
+    private readonly PublicFortniteMapClient publicMapClient = new();
+    private readonly CancellationTokenSource downloads = new();
+    private readonly bool autoLoadPublicMap;
+    private bool mapDownloadRunning;
+    private DateTimeOffset lastPublicRequest;
     private readonly DispatcherTimer timer = new() { Interval = TimeSpan.FromSeconds(1) };
     private LibraryDocument library = new();
     private RoutePlan current = new();
@@ -32,11 +37,13 @@ public partial class MainWindow : Window
     {
         store = new(dataDirectory ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Routenatelier"));
         images = new(store.DirectoryPath);
+        autoLoadPublicMap = dataDirectory is null;
         InitializeComponent();
         try
         {
             library = store.Load();
-            current = library.Routes.FirstOrDefault(r => !MapSpace.IsLegacyExample(r))?.Copy() ?? new();
+            current = library.Routes.FirstOrDefault(r => !MapSpace.IsLegacyExample(r))?.Copy()
+                ?? new RoutePlan { MapVersion = library.Maps.LastOrDefault(m => m.IsPublicFortniteMap)?.Id ?? MapSpace.WorkspaceId };
         }
         catch (Exception ex) when (IsDataError(ex))
         {
@@ -46,17 +53,24 @@ public partial class MainWindow : Window
         PlannerMap.RouteEdited += () => { dirty = true; visited = 0; Refresh(); };
         PlannerMap.PointSelected += i => PointsBox.SelectedIndex = i;
         PlannerMap.MarkerRequested += AddManualMarker;
+        PlannerMap.AreaSelected += SetSearchArea;
         PlannerMap.SpawnClicked += ToggleMarker;
         timer.Tick += (_, _) => RefreshProgress();
         Closing += OnClosing;
-        Loaded += (_, _) =>
+        Loaded += async (_, _) =>
         {
             var area = SystemParameters.WorkArea;
             Width = Math.Max(MinWidth, Math.Min(Width, area.Width)); Height = Math.Max(MinHeight, Math.Min(Height, area.Height));
             Left = Math.Max(area.Left, area.Left+(area.Width-Width)/2); Top = Math.Max(area.Top, area.Top+(area.Height-Height)/2);
+            if (autoLoadPublicMap && !initialMapAttempted && library.Routes.Count == 0)
+            {
+                initialMapAttempted = true;
+                await LoadPublicMapAsync(showErrors:false);
+            }
         };
         ready = true; LoadActiveMap(); Refresh();
     }
+    private bool initialMapAttempted;
     private static bool IsDataError(Exception ex) => ex is InvalidDataException or IOException or UnauthorizedAccessException
         or ArgumentException or NotSupportedException or FormatException or System.Security.SecurityException;
     private bool Run(Action action)
@@ -121,9 +135,9 @@ public partial class MainWindow : Window
         RoutesBox.ItemsSource = choices; RoutesBox.SelectedItem = current;
         RouteCount.Text = library.Routes.Count(r => !MapSpace.IsLegacyExample(r)).ToString(CultureInfo.CurrentCulture);
         NameBox.Text = current.Name; NameBox.IsEnabled = session is null;
-        RadiusSlider.Value = current.Radius; RadiusSlider.IsEnabled = session is null;
-        ModeBox.SelectedIndex = (int)current.RadiusMode; ModeBox.IsEnabled = session is null;
-        RadiusLabel.Text = UnitsBox.SelectedIndex == 1 ? $"{current.Radius/30:0.0} %" : $"{current.Radius:0.#} KE";
+        RadiusSlider.Value = current.Radius; RadiusSlider.IsEnabled = session is null && current.Area is null;
+        ModeBox.SelectedIndex = (int)current.RadiusMode; ModeBox.IsEnabled = session is null && current.Area is null;
+        RadiusLabel.Text = current.Area is not null ? "BEREICH" : UnitsBox.SelectedIndex == 1 ? $"{current.Radius/30:0.0} %" : $"{current.Radius:0.#} KE";
         PointsBox.ItemsSource = current.Points.Select((p,i) => new WaypointRow(
             $"{i+1:00}   {(i == 0 ? "Start" : i == current.Points.Count-1 ? "Ziel" : "Wegpunkt")}", $"{p.X:0.#}  /  {p.Y:0.#} KE")).ToArray();
         PointsBox.SelectedIndex = Math.Clamp(selection,-1,current.Points.Count-1);
@@ -133,13 +147,26 @@ public partial class MainWindow : Window
         PlannerMap.Route = current; PlannerMap.MapImage = activeImage;
         PlannerMap.ActiveMapVersion = activeMap?.Id ?? MapSpace.WorkspaceId;
         PlannerMap.Editable = CanEdit(); PlannerMap.PlaceMarkers = MarkerTool.IsChecked == true;
-        PlannerMap.VisibleSpawns = AllMarkers.IsChecked == true ? activeMap?.Spawns ?? [] : index.Query(current);
+        AllMarkers.IsEnabled = current.Area is null;
+        if (current.Area is not null) AllMarkers.IsChecked = false;
+        PlannerMap.VisibleSpawns = current.Area is null && AllMarkers.IsChecked == true ? activeMap?.Spawns ?? [] : index.Query(current);
         PlannerMap.Confirmed = (activeMap?.Spawns ?? []).Where(s => s.ManuallyConfirmed).Select(s => s.Id).ToHashSet();
         PlannerMap.VisitedPoints = session?.VisitedPoints ?? visited; PlannerMap.InvalidateVisual();
         MapVersionLabel.Text = activeMap?.Name ?? "Zugehörige Karte öffnen";
         MapSourceLabel.Text = activeMap is null ? "Kartenkennung unbekannt · Darstellung gesperrt"
+            : activeMap.IsPublicFortniteMap ? $"Fortnite-API · Abruf {activeMap.RetrievedAtUtc?.ToLocalTime():dd.MM.yyyy HH:mm}"
             : activeMap.HasImage ? activeMap.Source : "Keine Karte geladen · eigene Koordinaten";
-        RouteMetrics.Text = $"{Geometry.Length(current.Points):0} KE geplante Strecke  ·  {PlannerMap.VisibleSpawns.Count} Orte " + (AllMarkers.IsChecked == true ? "insgesamt" : "im Radius");
+        MapSourceLabel.ToolTip = activeMap?.IsPublicFortniteMap == true ? $"Bilddatum des Servers: {activeMap.ImageModifiedAtUtc?.ToLocalTime():dd.MM.yyyy HH:mm}. Der Anbieter kann Änderungen verzögert liefern." : null;
+        ChestStatusLabel.Visibility = activeMap?.IsPublicFortniteMap == true ? Visibility.Visible : Visibility.Collapsed;
+        ChestStatusLabel.Text = activeMap?.Spawns.Count > 0 ? "Truhen: eigene/importierte Orte · Vollständigkeit ungeprüft" : "Truhenpositionen: kein Datensatz angebunden";
+        FanNotice.Text = PublicMapContract.FanNotice;
+        FanNotice.Visibility = activeMap?.IsPublicFortniteMap == true ? Visibility.Visible : Visibility.Collapsed;
+        RegionInfo.Text = current.Area is { } selected ? $"{selected.Right-selected.Left:0} × {selected.Bottom-selected.Top:0} KE · Radiusfilter pausiert" : "Bereich per Ziehen auf der Karte festlegen";
+        ClearRegionButton.IsEnabled = current.Area is not null && session is null;
+        SelectRegionButton.IsEnabled = CanEdit();
+        SelectRegionButton.Content = PlannerMap.SelectArea ? "Auf Karte ziehen …" : "Bereich auswählen";
+        PublicMapButton.IsEnabled = !mapDownloadRunning && session is null;
+        RouteMetrics.Text = $"{Geometry.Length(current.Points):0} KE geplante Strecke  ·  {PlannerMap.VisibleSpawns.Count} Orte " + (current.Area is not null ? "im Bereich" : AllMarkers.IsChecked == true ? "insgesamt" : "im Radius");
         HistoryBox.ItemsSource = ActivitiesWithPending().AsEnumerable().Reverse().Select(a =>
             $"{a.RouteName}   ·   {a.StartedAt.ToLocalTime():dd.MM.yyyy HH:mm}   ·   {a.DurationSeconds/60:00}:{a.DurationSeconds%60:00} min   ·   {a.VisitedPoints}/{a.TotalPoints} manuell bestätigt   ·   {(a.Completed ? "abgeschlossen" : "beendet")}").ToArray();
         EmptyHistoryHint.Visibility = library.Activities.Count == 0 && pendingActivity is null ? Visibility.Visible : Visibility.Collapsed;
@@ -153,12 +180,12 @@ public partial class MainWindow : Window
         string progress = session is null ? "" : $"{session.VisitedPoints}/{session.TotalPoints} bestätigt  ·  {session.ElapsedSeconds/60:00}:{session.ElapsedSeconds%60:00}";
         SessionStatus.Text = progress;
         compact?.UpdateRoute(current, activeMap?.Id ?? MapSpace.WorkspaceId, activeImage, PlannerMap.VisibleSpawns,
-            PlannerMap.Confirmed, session?.VisitedPoints ?? visited, session is not null, progress);
+            PlannerMap.Confirmed, session?.VisitedPoints ?? visited, session is not null, progress,activeMap?.IsPublicFortniteMap == true);
     }
     private bool CanEdit() => session is null && activeMap is not null && !MapSpace.IsLegacyExample(current);
     private void SwitchTo(RoutePlan route, bool unsaved)
     {
-        current = route; dirty = unsaved; visited = 0; PlannerMap.SelectedPoint = -1;
+        current = route; dirty = unsaved; visited = 0; PlannerMap.SelectedPoint = -1; PlannerMap.SelectArea = false;
         LoadActiveMap(); PlannerMap.Fit(); Refresh();
         if (activeMap is null) Status("Die passende Karte fehlt. Route bleibt gespeichert und exportierbar; öffne ihr Kartenbild zum Bearbeiten.");
     }
@@ -309,8 +336,57 @@ public partial class MainWindow : Window
         Status($"{points.Count} statische Orte importiert · Quelle: {data.Maps[0].Source}");
     }
     private void ChangeMarkerTool(object sender, RoutedEventArgs e)
-    { if (ready && !updating) { if (MarkerTool.IsChecked == true) AllMarkers.IsChecked = true; Refresh(); } }
+    { if (ready && !updating) { if (MarkerTool.IsChecked == true) { PlannerMap.SelectArea = false; if (current.Area is null) AllMarkers.IsChecked = true; } Refresh(); } }
     private void ChangeAllMarkers(object sender, RoutedEventArgs e) { if (ready && !updating) Refresh(); }
+    private void SelectRegion(object sender,RoutedEventArgs e)
+    {
+        if (!CanEdit()) return;
+        PlannerMap.SelectArea = !PlannerMap.SelectArea;
+        if (PlannerMap.SelectArea) MarkerTool.IsChecked = false;
+        Refresh(); Status(PlannerMap.SelectArea ? "Linke Maustaste halten und den gewünschten Suchbereich aufziehen" : "Bereichsauswahl beendet");
+    }
+    public void SetSearchArea(SearchArea? area)
+    {
+        if (!CanEdit()) return;
+        Validation.RouteGeometry(current with { Area = area });
+        current.Area = area; dirty = true; PlannerMap.SelectArea = false;
+        Refresh(); Status(area is null ? "Suchbereich entfernt · Radiusfilter wieder aktiv" : "Suchbereich gesetzt · vorhandene Orte werden darin gefiltert");
+    }
+    private void ClearRegion(object sender,RoutedEventArgs e) => SetSearchArea(null);
+    private async void OpenPublicMap(object sender,RoutedEventArgs e) => await LoadPublicMapAsync();
+    public async Task<bool> LoadPublicMapAsync(bool showErrors = true)
+    {
+        if (mapDownloadRunning || session is not null || !MayLeave()) return false;
+        if (DateTimeOffset.UtcNow-lastPublicRequest < TimeSpan.FromMinutes(1))
+        { Status("Karte gerade abgerufen · bitte eine Minute bis zum nächsten Abruf warten"); return false; }
+        mapDownloadRunning = true; lastPublicRequest = DateTimeOffset.UtcNow; Refresh(); Status("Öffentliche Fortnite-Kartenabbildung wird geladen …");
+        try
+        {
+            var snapshot = await publicMapClient.DownloadAsync(downloads.Token);
+            string temporary = Path.Combine(store.DirectoryPath,"download-"+Guid.NewGuid().ToString("N")+".png");
+            try
+            {
+                RouteJson.WriteAtomic(temporary,snapshot.ImageBytes);
+                var imported = images.Import(temporary);
+                var previous = library.Maps.FirstOrDefault(m => m.Id == imported.Asset.Id);
+                var asset = (previous ?? imported.Asset) with { Name = "Fortnite-Karte", Source = "Fortnite-API · öffentliches Kartenbild",
+                    SourceUrl = PublicMapContract.ApiUrl, RetrievedAtUtc = snapshot.RetrievedAtUtc, ImageModifiedAtUtc = snapshot.ImageModifiedAtUtc };
+                Commit(library with { Maps = library.Maps.Where(m => m.Id != asset.Id).Append(asset).ToList() });
+                SwitchTo(current.MapVersion == asset.Id ? current : new RoutePlan { MapVersion = asset.Id },false);
+                Status("Kartenabbildung online geladen · keine Live-Partie und keine Truhenkoordinaten vom Anbieter");
+                return true;
+            }
+            finally { if (File.Exists(temporary)) File.Delete(temporary); }
+        }
+        catch (OperationCanceledException) when (downloads.IsCancellationRequested) { return false; }
+        catch (Exception ex) when (IsDataError(ex))
+        {
+            Status("Kartenabruf: "+ex.Message);
+            if (showErrors && !closing) Dialogs.Show(this,ex.Message,"Karte nicht aktualisiert");
+            return false;
+        }
+        finally { mapDownloadRunning = false; if (!closing) Refresh(); }
+    }
     private void StartRoute(object sender, RoutedEventArgs e)
     {
         if (session is not null) { OpenCompact(sender,e); return; }
@@ -354,5 +430,5 @@ public partial class MainWindow : Window
     private void MaximizeWindow(object sender, RoutedEventArgs e) => WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
     private void CloseWindow(object sender, RoutedEventArgs e) => Close();
     private void OnClosing(object? sender, CancelEventArgs e)
-    { if (!MayLeave()) { e.Cancel = true; return; } closing = true; timer.Stop(); compact?.Close(); }
+    { if (!MayLeave()) { e.Cancel = true; return; } closing = true; downloads.Cancel(); publicMapClient.Dispose(); timer.Stop(); compact?.Close(); }
 }

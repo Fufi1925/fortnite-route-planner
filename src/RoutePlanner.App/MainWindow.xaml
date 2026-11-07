@@ -19,7 +19,8 @@
     <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
     <StackPanel VerticalAlignment="Center"><TextBlock Text="Deine Route. Dein Plan." FontSize="25" FontWeight="SemiBold" Foreground="#EEEEEE"/><TextBlock Text="Planen, speichern und Schritt für Schritt loslegen." Foreground="#858585" Margin="0,5,0,0"/></StackPanel>
     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-     <Button Content="Karte öffnen" Click="OpenMap" Margin="0,0,8,0" AutomationProperties.AutomationId="OpenMap"/>
+     <Button x:Name="PublicMapButton" Content="Fortnite-Karte laden" Click="OpenPublicMap" Margin="0,0,8,0" AutomationProperties.AutomationId="LoadPublicMap"/>
+     <Button Content="Eigene Karte" Click="OpenMap" Margin="0,0,8,0" AutomationProperties.AutomationId="OpenMap"/>
      <Button Content="Kompakt" Click="OpenCompact" Margin="0,0,8,0" AutomationProperties.AutomationId="OpenCompact"/>
      <Button x:Name="StartRouteButton" Content="Route starten  →" Click="StartRoute" Style="{StaticResource PrimaryButton}" AutomationProperties.AutomationId="StartRoute"/>
     </StackPanel>
@@ -47,7 +48,7 @@
        <Slider x:Name="RadiusSlider" Minimum="0" Maximum="1500" ValueChanged="ChangeRadius" Margin="0,10,0,5" AutomationProperties.Name="Suchradius"/>
        <ComboBox x:Name="ModeBox" SelectedIndex="0" SelectionChanged="ChangeMode" FontSize="11"><ComboBoxItem Content="Entlang der Strecke"/><ComboBoxItem Content="Um jeden Wegpunkt"/></ComboBox>
        <ComboBox x:Name="UnitsBox" SelectedIndex="0" SelectionChanged="ChangeUnits" Margin="0,8,0,0" FontSize="11"><ComboBoxItem Content="Karteneinheiten · KE"/><ComboBoxItem Content="% der Kartenbreite"/></ComboBox>
-       <TextBlock Text="0–3000 KE pro Achse. Abstände beziehen sich auf deine Arbeitsfläche." TextWrapping="Wrap" FontSize="10" Foreground="#777777" Margin="0,10,0,0"/>
+       <TextBlock x:Name="RegionInfo" Text="Bereich auf der Karte auswählen" TextWrapping="Wrap" FontSize="10" Foreground="#777777" Margin="0,10,0,0"/>
        <Separator/>
        <TextBlock Text="DATEIEN &amp; DATEN" FontSize="10" Foreground="#858585" FontWeight="SemiBold" Margin="0,0,0,10"/>
        <Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="7"/><ColumnDefinition/></Grid.ColumnDefinitions><Button Content="Importieren" Click="ImportRoute" FontSize="11" Padding="5,8"/><Button Grid.Column="2" Content="Exportieren" Click="ExportRoute" FontSize="11" Padding="5,8"/></Grid>
@@ -58,10 +59,13 @@
      </ScrollViewer>
     </Border>
     <Grid Grid.Column="2">
-     <Grid.RowDefinitions><RowDefinition Height="58"/><RowDefinition Height="*"/><RowDefinition Height="64"/></Grid.RowDefinitions>
+     <Grid.RowDefinitions><RowDefinition Height="Auto" MinHeight="96"/><RowDefinition Height="*"/><RowDefinition Height="Auto" MinHeight="64"/></Grid.RowDefinitions>
      <DockPanel>
       <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top"><Button Content="−" Click="ZoomOut" Width="32" Padding="0" Margin="0,0,6,0" AutomationProperties.Name="Verkleinern"/><Button Content="+" Click="ZoomIn" Width="32" Padding="0" Margin="0,0,6,0" AutomationProperties.Name="Vergrößern"/><Button Content="Einpassen" Click="FitMap" FontSize="11"/></StackPanel>
-      <StackPanel><TextBlock x:Name="MapVersionLabel" FontSize="15" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/><TextBlock x:Name="MapSourceLabel" FontSize="10" Foreground="#808080" Margin="0,5,0,0" TextTrimming="CharacterEllipsis"/></StackPanel>
+      <StackPanel><TextBlock x:Name="MapVersionLabel" FontSize="15" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/><TextBlock x:Name="MapSourceLabel" FontSize="10" Foreground="#808080" Margin="0,5,0,0" TextTrimming="CharacterEllipsis"/>
+       <TextBlock x:Name="ChestStatusLabel" Visibility="Collapsed" FontSize="10" Foreground="#A0A0A0" Margin="0,5,0,0" TextWrapping="Wrap"/>
+       <StackPanel Orientation="Horizontal" Margin="0,10,0,0"><Button x:Name="SelectRegionButton" Content="Bereich auswählen" Click="SelectRegion" FontSize="11" MinHeight="30" Padding="10,6" AutomationProperties.AutomationId="SelectRegion"/><Button x:Name="ClearRegionButton" Content="×" Click="ClearRegion" MinHeight="30" Width="30" Padding="0" Margin="6,0,0,0" ToolTip="Suchbereich entfernen" AutomationProperties.AutomationId="ClearRegion"/></StackPanel>
+      </StackPanel>
      </DockPanel>
      <Border Grid.Row="1" CornerRadius="10" BorderBrush="#292929" BorderThickness="1" Background="#0A0A0A" ClipToBounds="True">
       <Grid>
@@ -73,10 +77,10 @@
        </StackPanel>
       </Grid>
      </Border>
-     <Grid Grid.Row="2" Margin="0,12,0,0"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+     <StackPanel Grid.Row="2" Margin="0,12,0,0"><Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
       <StackPanel><TextBlock x:Name="RouteMetrics" FontSize="11" Foreground="#A0A0A0"/><TextBlock Text="Klick: setzen  ·  Ziehen: bearbeiten  ·  Rechts ziehen: verschieben" FontSize="10" Foreground="#666666" Margin="0,6,0,0" TextWrapping="Wrap"/></StackPanel>
       <Button Grid.Column="1" Content="Verlauf öffnen" Click="ShowHistory" Style="{StaticResource QuietButton}" FontSize="11" VerticalAlignment="Top"/>
-     </Grid>
+     </Grid><TextBlock x:Name="FanNotice" TextWrapping="Wrap" Visibility="Collapsed" FontSize="9" Foreground="#8A8A8A" Margin="0,8,0,12"/></StackPanel>
     </Grid>
     <Border Grid.Column="4" Background="#101010" BorderBrush="#242424" BorderThickness="1" CornerRadius="10" Padding="14">
      <Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
@@ -109,7 +113,7 @@
     </Grid></Border>
    </Grid>
    <Border Grid.Row="3" BorderBrush="#242424" BorderThickness="0,1,0,0" Padding="24,0">
-    <DockPanel><StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center"><TextBlock x:Name="SessionStatus" Text="" Foreground="#B0B0B0" FontSize="10" Margin="0,0,16,0"/><TextBlock Text="●  LOKAL  /  KEINE FORTNITE-VERBINDUNG" FontSize="9" Foreground="#686868"/></StackPanel><TextBlock x:Name="StatusLabel" Text="Bereit" FontSize="10" Foreground="#777777" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/></DockPanel>
+    <DockPanel><StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center"><TextBlock x:Name="SessionStatus" Text="" Foreground="#B0B0B0" FontSize="10" Margin="0,0,16,0"/><TextBlock Text="●  STATISCHE PLANUNG  /  KEINE LIVE-PARTIE" FontSize="9" Foreground="#686868"/></StackPanel><TextBlock x:Name="StatusLabel" Text="Bereit" FontSize="10" Foreground="#777777" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/></DockPanel>
    </Border>
   </Grid>
  </Border>

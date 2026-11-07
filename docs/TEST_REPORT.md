@@ -1,10 +1,10 @@
-# Testbericht 0.2
+# Testbericht 0.3
 
 Stand: 2026-11-07. Lokale Umgebung Linux x64, SDK 10.0.403. Windows-Lauf, Screenshots und Start der veröffentlichten EXE erfolgen anschließend über den [Windows-Workflow](https://github.com/Fufi1925/fortnite-route-planner/actions). Maßgeblich sind dessen tatsächliche Ausgaben und das Artefakt `offline-verification`; eine bloße Kompilierung wird nicht als Windows-Ausführung ausgegeben.
 
 ## Lokal tatsächlich ausgeführt
 
-- `dotnet run --project tests/RoutePlanner.Tests -c Release`: 31 erfolgreiche Prüfungen, 0 Fehler.
+- `dotnet run --project tests/RoutePlanner.Tests -c Release`: 42 erfolgreiche Prüfungen, 0 Fehler.
 - `dotnet build tests/RoutePlanner.UiSmoke -c Release --no-restore`: Windows-UI-Test und Anwendung kompiliert.
 - `python3 scripts/audit-source.py`: ergänzende Prüfung von Anwendungsdateien, Manifest und Abhängigkeiten.
 
@@ -23,3 +23,9 @@ Der UI-Test startet ohne voreingestellte Daten und setzt Wegpunkte über tatsäc
 `scripts/smoke-published.ps1` startet die selbstenthaltende EXE auf dem Windows-Runner und erkennt das Planerfenster. Es beendet ausschließlich die eigene gestartete Testinstanz; kein Spielprozess ist erforderlich oder angesprochen.
 
 Die Testumgebung von GitHub Actions ist Windows Server 2025 x64. Reale Windows-10/11-Nutzung mit wechselnder DPI, Mehrmonitorbedingungen, nativen Dateidialogen und physischen Mausbewegungen bleibt zusätzlich manuell abzunehmen. Es gibt keinen echten Fortnite-Test und keine Live-Datenbehauptung.
+
+## Ergänzungen 0.3
+
+Zusätzliche Prüfungen für Rechtecknormalisierung, Randpunkte, ungültige und unvollständige Bereichskoordinaten, Bereichsfilter ohne Wegpunkte, Wiederherstellung des Radiusfilters, Duplikation und Export/Import. Netzwerkprüfungen verwenden ausschließlich Test-HTTP-Handler für die dokumentierten statischen Ziele: unbekannte Host-/Bildadressen, Weiterleitungen, Rate-Limits und Retry-After, Größenlimits und ungültige Bilder werden verworfen. Keine Truhen werden aus POI-Daten erzeugt.
+
+Der Windows-UI-Workflow setzt ROUTE_VERIFY_PUBLIC_MAP=1 und ruft zusätzlich tatsächlich das öffentliche Kartenbild per HTTPS ab. Er prüft die sichtbare Truhen-Datenlücke, Fan-Content-Kennzeichnung und eine gespeicherte Bereichsauswahl auf dem real geladenen Kartenbild. Für diesen zusätzlichen Integrationsschritt ist Internet erforderlich; die lokalen Tests und die lokale Planung funktionieren weiterhin ohne Internet. Maßgeblich bleiben der tatsächliche Windows-Lauf und dessen Protokolle, nicht bloß diese Beschreibung.

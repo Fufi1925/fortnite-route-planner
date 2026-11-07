@@ -17,8 +17,9 @@ public partial class CompactWindow : Window
         Left = Math.Max(area.Left,area.Right-Width-16); Top = area.Top+16;
     }
     public void UpdateRoute(RoutePlan route,string mapVersion,ImageSource? image,IReadOnlyList<SpawnPoint> spawns,
-        HashSet<string> confirmed,int visited,bool running,string progress)
+        HashSet<string> confirmed,int visited,bool running,string progress,bool showFanNotice = false)
     {
+        FanNotice.Text = PublicMapContract.FanNotice; FanNotice.Visibility = showFanNotice ? Visibility.Visible : Visibility.Collapsed;
         RouteTitle.Text = route.Name;
         Metrics.Text = $"{route.Points.Count} Wegpunkte · {Geometry.Length(route.Points):0} KE geplante Strecke";
         CompactMap.Route = route; CompactMap.ActiveMapVersion = mapVersion; CompactMap.MapImage = image;

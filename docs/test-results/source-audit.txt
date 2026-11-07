@@ -1,6 +1,7 @@
 $ python3 scripts/audit-source.py
-PASS supplementary source review: 16 application files, no flagged API/pattern
+PASS supplementary source review: 17 application files, no flagged API/pattern
 PASS no explicit PackageReference; ordinary asInvoker / uiAccess=false manifest
+PASS dedicated static-map HTTPS client reviewed separately; no general live-data integration
 LIMIT: source pattern checks do not establish Fortnite permission or ban safety
 
 EXIT 0

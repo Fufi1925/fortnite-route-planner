@@ -57,7 +57,10 @@ public sealed class SpawnIndex
     public IReadOnlyList<SpawnPoint> Query(RoutePlan route)
     {
         Validation.RouteGeometry(route);
-        if (route.MapVersion != mapVersion || route.Points.Count == 0) return [];
+        if (route.MapVersion != mapVersion) return [];
+        if (route.Area is { } area)
+            return cells.Values.SelectMany(bucket => bucket).Where(p => area.Contains(p.Position)).OrderBy(p => p.Id,StringComparer.Ordinal).ToArray();
+        if (route.Points.Count == 0) return [];
         HashSet<SpawnPoint> candidates = [];
         void Box(MapPoint a, MapPoint b)
         {

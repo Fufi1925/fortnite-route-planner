@@ -1,6 +1,6 @@
 # Compliance und Quellen
 
-Prüfstand: 2026-11-07 UTC. Version 0.2 ersetzt die bisherige Simulation durch einen realen lokalen Planer. Sie enthält weder generierte Spielobjekte noch eine behauptete Fortnite-Anbindung. Die offiziellen Quellen aus der ursprünglichen Prüfung sind mit Abrufmetadaten in `SOURCE_AUDIT.json` festgehalten.
+Prüfstand: 2026-11-07 UTC. Version 0.3 ergänzt einen separat geprüften öffentlichen statischen Kartenabruf und die Bereichsauswahl. Einzelentscheidung, aktuelle Saisonreferenz und Truhen-Datenlücke: [CURRENT_MAP_AND_CHESTS.md](CURRENT_MAP_AND_CHESTS.md). Die normale Kartenanzeige ist keine Live-Partie-Anbindung. Version 0.2 ersetzte die bisherige Simulation durch einen realen lokalen Planer. Sie enthält weder generierte Spielobjekte noch eine behauptete Fortnite-Anbindung. Die offiziellen Quellen aus der ursprünglichen Prüfung sind mit Abrufmetadaten in `SOURCE_AUDIT.json` festgehalten.
 
 ## Entscheidung
 
@@ -21,7 +21,7 @@ Eigene Routen, bewusst importierte lokale Kartenbilder und manuelle Einträge we
 | Funktion | Entscheidung |
 |---|---|
 | Lokale Planung, Geometrie, Import/Export, eigene Orte | Implementiert; ausschließlich bewusste Benutzereingaben und lokale Dateien. |
-| Eigene Kartenbilder | Implementiert, nur PNG/JPEG und quadratische Abbildung. Keine mitgelieferte Fortnite-Karte, kein automatischer Download. Dateiformatprüfung ist kein Rechtebeleg. Nutzer muss die Datei rechtmäßig verwenden dürfen. |
+| Eigene Kartenbilder | Implementiert, nur PNG/JPEG und quadratische Abbildung. Keine mitgelieferte Fortnite-Karte. Separat erlaubter öffentlicher Bildabruf mit Fan-Content-Hinweis gemäß neuer Quellenentscheidung; kein Game-Event- oder Match-Abruf. Dateiformatprüfung ist kein Rechtebeleg. Nutzer muss die Datei rechtmäßig verwenden dürfen. |
 | Importierte Ortsdaten | Quellenangabe und passende Kartenkennung erforderlich. Als statisch behandelt; keine Garantie tatsächlicher Truhen in einer Partie. Keine öffentlichen Spawn-Daten ohne belegte Lizenz übernommen. |
 | Manuelle Routengänge | Tatsächliche vergangene Zeit und ausdrücklich bestätigte Schritte; keine Spielposition, Eliminierungen oder erfundenen Match-Ereignisse. |
 | Kompaktes Fenster | Gewöhnliches WPF-Fenster, optional normales Topmost. Keine Zusage zur Zulässigkeit mit Fortnite; reale Tests ausschließlich über neutralen Anwendungen. |

@@ -1,4 +1,4 @@
-$ dotnet run --project tests/RoutePlanner.Tests -c Release
+$ /tmp/route-dotnet/dotnet run --project tests/RoutePlanner.Tests -c Release
 PASS Segment: senkrechter Abstand
 PASS Segment: Projektion vor/nach Endpunkt
 PASS Segment: degenerierter Abschnitt
@@ -12,7 +12,7 @@ PASS Planungszustand: leerer Name verhindert keinen Kartenfilter
 PASS Kartengrenzen: Ecken zulässig, NaN/Infinity/außerhalb ungültig
 PASS Index: deterministisch identisch mit vollständiger Suche
 PASS Import/Export: vollständiger Roundtrip
-PASS Schema: Migration v1/v2 nach v3 ohne simulierten Verlauf
+PASS Schema: Migration v1/v2/v3 nach v4 ohne simulierten Verlauf
 PASS Schema: unbekannte und fehlende Version ablehnen
 PASS Version: alte/fremde Karte warnbar und keine Spawns
 PASS Import: defekt, null, doppelte Schlüssel, fremde Felder
@@ -28,9 +28,20 @@ PASS Manueller Routengang: Abbruch und unveränderliche Routenkopie
 PASS Karten und Orte: echte Einträge speichern und passend filtern
 PASS Karten: Pfade, fehlende Metadaten und falsche Orte ablehnen
 PASS Keine automatischen Daten bei neuem Start
+PASS Bereich: Normalisierung, inklusive Kanten und Außenpunkte
+PASS Bereich: filtern ohne Wegpunkte, Radius wird nicht zusätzlich angewendet
+PASS Bereich: null stellt Radiusfilter wieder her
+PASS Bereich: ungültige Werte und leere Fläche ablehnen
+PASS Bereich: Kopie und JSON erhalten Koordinaten
+PASS Kartenabruf: nur dokumentierte HTTPS-Ziele und keine Truhenwerte
+PASS Kartenabruf: fremdes Bildziel und lokale Adressen ablehnen
+PASS Kartenabruf: Fehler und Weiterleitung ohne Wiederholung
+PASS Kartenabruf: Retry-After verhindert weitere Anfragen
+PASS Kartenabruf: ungültiges Bild und übergroße Antwort ablehnen
+PASS Kartenquelle: Metadaten und Abrufdatum bleiben nachvollziehbar
 PASS Palette: nur Schwarz, Weiß und Grau in der Anwendungsoberfläche
-PROFILE index=7.5ms query-mean=9.68ms managed=22.4MiB working-set=83.0MiB
+PROFILE index=9.4ms query-mean=8.26ms managed=16.0MiB working-set=89.6MiB
 PASS Performance: 100.000 Punkte / 100 Filter, Referenzergebnis
-RESULT 31 passed; 0 failed
+RESULT 42 passed; 0 failed
 
 EXIT 0

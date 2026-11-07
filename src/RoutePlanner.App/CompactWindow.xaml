@@ -12,6 +12,7 @@
    <Grid Margin="0,8,0,12"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="8"/><ColumnDefinition/></Grid.ColumnDefinitions><Button Content="Beenden" Click="StopRoute" FontSize="11"/><Button Grid.Column="2" Content="Zur Planung" Click="ReturnToPlanner" FontSize="11"/></Grid>
    <CheckBox Content="Fenster im Vordergrund" Checked="TopmostChanged" Unchecked="TopmostChanged" FontSize="11" AutomationProperties.AutomationId="Topmost"/>
    <TextBlock Text="Manuelle Fortschritte · keine Live-Ortung" FontSize="10" Foreground="#656565" Margin="0,10,0,0"/>
+   <TextBlock x:Name="FanNotice" TextWrapping="Wrap" Visibility="Collapsed" FontSize="9" Foreground="#8A8A8A" Margin="0,8,0,0"/>
   </StackPanel>
  </Grid></Border>
 </Window>

@@ -57,6 +57,13 @@ public static class Program
                 Assert(map.VisibleSpawns.Count == 0,"Radiusfilter blendet außerhalb liegende Orte aus");
                 radius.Value = 110;Click(window,"Speichern");
                 Assert(map.VisibleSpawns.Count == 2,"Radiusfilter zeigt passende Orte");
+                var area=new SearchArea(800,1800,1000,2000);
+                window.SetSearchArea(area);Click(window,"Speichern");
+                Assert(map.VisibleSpawns.Count==1 && store.Load().Routes.Single().Area==area,"Bereich filtert vorhandene Orte und wird gespeichert");
+                radius.Value=0;Assert(map.VisibleSpawns.Count==1,"Aktiver Bereich ist unabhängig vom Radius");
+                ((Button)window.FindName("ClearRegionButton")).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                Assert(map.VisibleSpawns.Count==0,"Bereich entfernen aktiviert Radiusfilter wieder");
+                radius.Value=110;Click(window,"Speichern");
                 await Capture(window,"planner.png");
                 window.ExportRouteFile(Path.Combine(temp,"export.json"));
                 window.ImportRouteFile(Path.Combine(temp,"export.json"));Click(window,"Speichern");
@@ -98,6 +105,20 @@ public static class Program
                 Click(window,"Verlauf öffnen");await Capture(window,"history.png");Click(window,"← Zur Planung");
                 Click(window,"+ Neue Route");Click(window,"Speichern");
                 Assert(((MapView)window.FindName("PlannerMap")).Route!.Points.Count == 0,"Leere eigene Route nutzbar");
+                if(Environment.GetEnvironmentVariable("ROUTE_VERIFY_PUBLIC_MAP")=="1")
+                {
+                    bool loaded=await window.LoadPublicMapAsync(showErrors:false);
+                    Assert(loaded,"Öffentliche Fortnite-Karte tatsächlich per HTTPS geladen: "+((TextBlock)window.FindName("StatusLabel")).Text);
+                    map=(MapView)window.FindName("PlannerMap");
+                    Assert(map.MapImage is not null && map.VisibleSpawns.Count==0,"Echtes Kartenbild ohne erfundene Truhenpunkte");
+                    Assert(((TextBlock)window.FindName("ChestStatusLabel")).Text.Contains("kein Datensatz"),"Fehlende Truhenquelle ausdrücklich sichtbar");
+                    window.SetSearchArea(new(900,1100,2200,2400));Click(window,"Speichern");
+                    Assert(store.Load().Routes.Single(r=>r.Id==map.Route!.Id).Area is not null,"Bereich auf öffentlicher Karte tatsächlich gespeichert");
+                    Assert(((TextBlock)window.FindName("FanNotice")).Visibility==Visibility.Visible,"Epic-Fan-Content-Hinweis sichtbar");
+                    await Capture(window,"planner.png");
+                    Click(window,"Kompakt");await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+                    compact=app.Windows.OfType<CompactWindow>().Single();await Capture(compact,"compact.png");Click(compact,"Zur Planung");
+                }
                 Console.WriteLine("RESULT Windows WPF smoke passed");exitCode = 0;
             }
             catch (Exception ex) { Console.WriteLine("FAIL Windows WPF smoke: "+ex); }

@@ -15,6 +15,7 @@ public sealed class MapView : FrameworkElement
     public ImageSource? MapImage { get; set; }
     public string ActiveMapVersion { get; set; } = MapSpace.WorkspaceId;
     public bool PlaceMarkers { get; set; }
+    public bool SelectArea { get; set; }
     public int VisitedPoints { get; set; }
     public bool Editable { get; set; } = true;
     public int SelectedPoint { get; set; } = -1;
@@ -22,6 +23,9 @@ public sealed class MapView : FrameworkElement
     public event Action<int>? PointSelected;
     public event Action<string>? SpawnClicked;
     public event Action<MapPoint>? MarkerRequested;
+    public event Action<SearchArea>? AreaSelected;
+    private MapPoint? areaStart;
+    private SearchArea? areaPreview;
     private double zoom = 1;
     private Vector pan;
     private Point start, last;
@@ -95,6 +99,13 @@ public sealed class MapView : FrameworkElement
                     dc.DrawRectangle(White, null, new Rect(point.X + 10/s, point.Y - 16/s, 8/s, 5/s));
             }
         }
+        var selectedArea = areaPreview ?? (Route?.MapVersion == ActiveMapVersion ? Route.Area : null);
+        if (selectedArea is { } area)
+        {
+            var rectangle = new Rect(area.Left,area.Top,area.Right-area.Left,area.Bottom-area.Top);
+            dc.DrawRectangle(Brush("#12FFFFFF"),new Pen(White,1.5/s) { DashStyle = DashStyles.Dash },rectangle);
+            Text(dc,"SUCHBEREICH",new(area.Left+9/s,area.Top+8/s),10/s,White);
+        }
         dc.Pop(); dc.Pop();
         Text(dc, "0 — 3000 KE   /   NORMIERTE KOORDINATEN", new(16, ActualHeight-25), 10, Muted);
     }
@@ -126,6 +137,11 @@ public sealed class MapView : FrameworkElement
         { panning = true; CaptureMouse(); e.Handled = true; return; }
         if (e.ChangedButton != MouseButton.Left || !Editable || Route is null || Route.MapVersion != ActiveMapVersion) return;
         var at = World(start);
+        if (SelectArea)
+        {
+            if (Geometry.IsOnMap(at)) { areaStart = at; areaPreview = null; CaptureMouse(); }
+            e.Handled = true; return;
+        }
         if (PlaceMarkers)
         {
             if (Geometry.IsOnMap(at)) MarkerRequested?.Invoke(at);
@@ -147,7 +163,13 @@ public sealed class MapView : FrameworkElement
     {
         base.OnMouseMove(e); var at = e.GetPosition(this);
         if ((at-start).Length > 3) moved = true;
-        if (panning) { pan += at-last; InvalidateVisual(); }
+        if (areaStart is { } anchor)
+        {
+            var point = World(at);
+            areaPreview = SearchArea.FromCorners(anchor,new(Math.Clamp(point.X,0,3000),Math.Clamp(point.Y,0,3000)));
+            InvalidateVisual();
+        }
+        else if (panning) { pan += at-last; InvalidateVisual(); }
         else if (draggingPoint >= 0 && Route is not null && moved)
         {
             var p = World(at);
@@ -159,6 +181,13 @@ public sealed class MapView : FrameworkElement
     protected override void OnMouseUp(MouseButtonEventArgs e)
     {
         base.OnMouseUp(e);
+        if (e.ChangedButton == MouseButton.Left && areaStart is not null)
+        {
+            var area = areaPreview;
+            areaStart = null; areaPreview = null; ReleaseMouseCapture();
+            if (moved && area is not null && area.Right>area.Left && area.Bottom>area.Top) AreaSelected?.Invoke(area);
+            InvalidateVisual(); return;
+        }
         if (e.ChangedButton == MouseButton.Left && pendingAdd && !moved && Route is not null && Route.Points.Count < 500)
         {
             var p = World(e.GetPosition(this));
@@ -169,5 +198,5 @@ public sealed class MapView : FrameworkElement
         ReleaseMouseCapture(); InvalidateVisual();
     }
     protected override void OnLostMouseCapture(MouseEventArgs e)
-    { pendingAdd = panning = false; draggingPoint = -1; base.OnLostMouseCapture(e); }
+    { pendingAdd = panning = false; draggingPoint = -1; areaStart = null; areaPreview = null; base.OnLostMouseCapture(e); }
 }

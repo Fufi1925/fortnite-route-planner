@@ -58,5 +58,30 @@
       "bytes": 31455,
       "htmlSha256": "8492da040f7ce269764e0c802d059698f44aada18ec8d43909c36e5e7b04906a"
     }
-  ]
+  ],
+  "currentMapReview": {
+    "checkedUtc": "2026-11-07",
+    "apiUrl": "https://fortnite-api.com/v1/map?language=de",
+    "apiStatus": 200,
+    "apiBodySha256": "c4757ea05e0b50a01a83aa22fa2c5740eea35b0db68ae3862c0b10609410e7ba",
+    "imageUrl": "https://fortnite-api.com/images/map.png",
+    "imageStatus": 200,
+    "imageLastModified": "2026-11-02T05:37:38Z",
+    "imageSha256": "0d4ad3c6c4d4b5f7aa9f9aeeb55a15f0f8dc15c042b93c945b6cc8862a236ab7",
+    "imageSize": [
+      2048,
+      2048
+    ],
+    "imageBytes": 2379325,
+    "referenceUrls": [
+      "https://dash.fortnite-api.com/endpoints/map",
+      "https://legal.epicgames.com/epicgames/fan-art-policy",
+      "https://www.fortnite.com/news/fortnite-treasure-hunters-the-greatest-adventure-of-all-time?lang=en-US",
+      "https://www.api-fortnite.com/fortnite-map-objects-api",
+      "https://www.api-fortnite.com/terms",
+      "https://fn-api.cc/tos"
+    ],
+    "decisionDocument": "CURRENT_MAP_AND_CHESTS.md",
+    "chestCoverage": "Unavailable: no licensed complete dataset or approved live match source"
+  }
 }

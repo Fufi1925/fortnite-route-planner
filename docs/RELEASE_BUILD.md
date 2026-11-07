@@ -21,7 +21,7 @@ Runtime 10.0.14, win-x64, self-contained, PublishSingleFile/IncludeNativeLibrari
 
 ## GitHub Actions
 
-`windows.yml` führt Kernprüfungen, den vollständigen eigenen WPF-Smoke-Test, Publish und den tatsächlichen Start der veröffentlichten EXE aus. Artefakte: `Routenatelier-win-x64` sowie `offline-verification` mit Logs und echten Screenshots. Die Tests arbeiten auf Windows Server 2025 im GitHub-Runner und isolierten Daten, ohne Fortnite. Das ist keine vollständige manuelle Windows-10/11-/DPI-Abnahme.
+`windows.yml` führt Kernprüfungen, den vollständigen eigenen WPF-Smoke-Test einschließlich öffentlichem Kartenabruf und Bereichsauswahl, Publish und den tatsächlichen Start der veröffentlichten EXE aus. Artefakte: `Routenatelier-win-x64` sowie `offline-verification` mit Logs und echten Screenshots. Die Tests arbeiten auf Windows Server 2025 im GitHub-Runner und isolierten Daten, ohne Fortnite. Das ist keine vollständige manuelle Windows-10/11-/DPI-Abnahme.
 
 `release.yml` veröffentlicht ausschließlich aus einem erfolgreichen Windows-Lauf auf main. Eingaben sind dessen Run-ID und die Version; passende Release Notes müssen unter `docs/releases/<tag>.md` liegen. Nur dieser manuell gestartete Job erhält `contents: write` und `actions: read`. Er prüft Commit-Zuordnung, Paket-/Einzeldatei-Prüfsummen und Testausgaben. Erst nach erfolgreichem Upload aller Dateien wird der Entwurf veröffentlicht. Bereits öffentliche Releases werden nicht überschrieben.
 

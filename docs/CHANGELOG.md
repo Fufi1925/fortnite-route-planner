@@ -1,3 +1,7 @@
+# 0.3.0
+
+Öffentliche Fortnite-Kartenabbildung online abrufen und offline zwischenspeichern; Quelle, Abrufzeit und Bilddatum getrennt dokumentieren. Keine Live-Partie-Anbindung oder erfundene Truhendaten. Neuer Suchbereich per Ziehen, gespeicherte Rechteckgrenzen und Filterung vorhandener Orte ohne notwendige Wegpunkte. Schema 4 erhält ältere Routen und Karten. Separat begrenzter HTTPS-Client, fremde Ziele und Weiterleitungen abgelehnt, Retry-After respektiert. Epic-Fan-Content-Hinweis sichtbar. Vollständige Truhendaten bleiben mangels lizenziertem Anbieterzugang offen.
+
 # 0.2.0
 
 Komplette Überarbeitung zum lokalen Planer: keine simulierten Provider, keine generierten Spawnpunkte oder Beispielinsel, keine erfundenen Rundenergebnisse und kein Login. Neue monochrome Oberfläche mit dunklen eigenen Control-Templates, eigener Titelleiste, klarer Bibliothek, Kartenbereich und Wegpunktliste. Eigene Kartenbilder und Orte werden tatsächlich importiert und gespeichert. Routengänge entstehen ausschließlich durch manuelle Bestätigungen mit real vergangener Zeit.
