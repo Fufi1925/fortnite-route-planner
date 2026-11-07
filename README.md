@@ -4,7 +4,7 @@ Windows-Desktop-App zum **offline** Planen von Routen mit Quellcode unter MIT-Li
 
 ## Starten
 
-Vorgesehenes öffentliches Repository: `Fufi1925/fortnite-route-planner`. Die aktuelle GitHub-Integration hat die Repository-Erstellung mit HTTP 403 abgelehnt; die Veröffentlichung ist vorbereitet, aber noch nicht erfolgt. Nach Erstellung und Upload entstehen Windows-Builds unter [GitHub Actions](https://github.com/Fufi1925/fortnite-route-planner/actions): **Windows build and offline checks → erfolgreicher Lauf → Artifacts → Routenatelier-win-x64**. Quellcode und Buildskripte sind vollständig enthalten; generierte EXE-/ZIP-Dateien werden als CI-Artefakte ausgeliefert.
+Öffentliches Repository: [Fufi1925/fortnite-route-planner](https://github.com/Fufi1925/fortnite-route-planner). Windows-Builds entstehen unter [GitHub Actions](https://github.com/Fufi1925/fortnite-route-planner/actions): **Windows build and offline checks → erfolgreicher Lauf → Artifacts → Routenatelier-win-x64**. Die Verfügbarkeit hängt vom erfolgreichen CI-Lauf ab. Quellcode und Buildskripte sind vollständig enthalten; generierte EXE-/ZIP-Dateien werden als CI-Artefakte ausgeliefert.
 
 Das selbst gebaute Paket liegt unter `artifacts/Routenatelier-win-x64.zip`. Entpacken und `RoutePlanner.exe` als normaler Benutzer starten. Die Anwendung ist selbstenthaltend; eine separate .NET-Installation ist nicht nötig. Windows x64 erforderlich. Das Paket ist nicht signiert. Der ursprüngliche lokale Build wurde unter Linux für Windows kompiliert; dessen Windows-Ausführung wurde nicht geprüft. Sicherheitsfunktionen von Windows nicht abschalten.
 

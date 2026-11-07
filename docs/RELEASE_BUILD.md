@@ -38,7 +38,7 @@ WPF wird nicht getrimmt. Kein ReadyToRun-Crossgen nötig. `BUILD_INFO.json` bene
 
 `.github/workflows/windows.yml` führt die beiden ausführbaren Testprogramme und Publish auf `windows-latest` aus und lädt `Routenatelier-win-x64` sowie `offline-verification` mit Logs/Screenshots hoch. Keine geheimen API-Tokens erforderlich; Workflowrechte nur `contents: read`.
 
-Vorgesehene Repository-Adresse: [Fufi1925/fortnite-route-planner](https://github.com/Fufi1925/fortnite-route-planner). Die aktuelle GitHub-Integration hat sowohl die GraphQL- als auch die REST-Erstellung mit „Resource not accessible by integration“ abgelehnt. Daher ist noch kein Repository erstellt oder Code hochgeladen. Es muss zunächst als leeres öffentliches Repository im Konto `Fufi1925` angelegt werden; die lokale Veröffentlichung ist vorbereitet.
+Öffentliches Repository: [Fufi1925/fortnite-route-planner](https://github.com/Fufi1925/fortnite-route-planner). Das leere Repository wurde vom Nutzer erstellt. Der vollständige Quellstand wird mit seiner ausdrücklichen Freigabe auf `main` veröffentlicht.
 
 Nach dem Upload läuft der Workflow bei Pushes auf `main` oder `feature/fortnite-route-overlay` sowie manuell. Download: **Actions → Windows build and offline checks → erfolgreicher Lauf → Artifacts → Routenatelier-win-x64**. Das GitHub-Artefakt entpacken, dann das enthaltene Produkt-ZIP entpacken. Bei fehlgeschlagenem UI-Smoke werden Logs hochgeladen, aber kein erfolgreicher Build behauptet. Den tatsächlichen Laufstatus zeigt GitHub Actions. CI verändert keine Branches und veröffentlicht keinen Release.
 
