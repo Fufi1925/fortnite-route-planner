@@ -17,7 +17,7 @@ files = [p for p in (root / "src").rglob("*")
          and not {"obj", "bin"}.intersection(p.relative_to(root).parts)]
 for path in files:
     for number, line in enumerate(path.read_text().splitlines(), 1):
-        if forbidden.search(line):
+        if forbidden.search(line) and not (path.name == "ExternalLinks.cs" and "Process.Start(new ProcessStartInfo(address) { UseShellExecute = true })" in line):
             errors.append(f"{path.relative_to(root)}:{number}: requires review")
         if re.search(r"System\.Net|HttpClient", line) and path.relative_to(root).as_posix() != "src/RoutePlanner.Core/PublicFortniteMapClient.cs":
             errors.append(f"{path.relative_to(root)}:{number}: unexpected network code")
@@ -26,8 +26,20 @@ for required in ('AllowAutoRedirect = false', 'UseDefaultCredentials = false', '
     if required not in network_source:
         errors.append('static public-map client missing safeguard: ' + required)
 for project in (root / "src").rglob("*.csproj"):
-    if any(ET.parse(project).iter("PackageReference")):
+    packages = [p.attrib for p in ET.parse(project).iter("PackageReference")]
+    expected = [{"Include":"Microsoft.Web.WebView2", "Version":"1.0.4314.35"}] if project.name == "RoutePlanner.App.csproj" else []
+    if packages != expected:
         errors.append(f"{project.name}: unexpected explicit package dependency")
+browser_source = (root / 'src/RoutePlanner.App/WebMapWindow.xaml.cs').read_text()
+for prohibited in ('ExecuteScript', 'AddScriptToExecuteOnDocumentCreated', 'AddHostObjectToScript', 'WebMessageReceived', 'ServerCertificateErrorDetected'):
+    if prohibited in browser_source:
+        errors.append('unexpected browser/native integration: ' + prohibited)
+for required in ('AreHostObjectsAllowed = false', 'IsWebMessageEnabled = false', 'FortniteGgSite.IsSiteNavigation', 'e.Cancel = true', 'CoreWebView2PermissionState.Deny'):
+    if required not in browser_source:
+        errors.append('browser safeguard missing: ' + required)
+links_source = (root / 'src/RoutePlanner.App/ExternalLinks.cs').read_text()
+if 'if (!FortniteGgSite.IsExternalLink(address)) throw' not in links_source:
+    errors.append('external link launcher missing exact allowlist')
 manifest = ET.parse(root / "src/RoutePlanner.App/app.manifest")
 requested = manifest.find(".//{urn:schemas-microsoft-com:asm.v3}requestedExecutionLevel")
 if requested is None or requested.attrib != {"level": "asInvoker", "uiAccess": "false"}:
@@ -36,6 +48,7 @@ if errors:
     print("\n".join(errors))
     sys.exit(1)
 print(f"PASS supplementary source review: {len(files)} application files, no flagged API/pattern")
-print("PASS no explicit PackageReference; ordinary asInvoker / uiAccess=false manifest")
+print("PASS pinned Microsoft WebView2 SDK is the only explicit package; ordinary asInvoker / uiAccess=false manifest")
 print("PASS dedicated static-map HTTPS client reviewed separately; no general live-data integration")
+print("PASS isolated ordinary website view; no scripts, native bridge or certificate overrides; exact external-link allowlist")
 print("LIMIT: source pattern checks do not establish Fortnite permission or ban safety")

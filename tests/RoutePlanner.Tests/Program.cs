@@ -230,7 +230,13 @@ Check("Kartenquelle: Metadaten und Abrufdatum bleiben nachvollziehbar", () => {
     Reject(()=>Validation.Map(map with {SourceUrl="https://private.example/api"}));
     Reject(()=>Validation.Map(map with {RetrievedAtUtc=null}));
 });
-Check("Palette: nur Schwarz, Weiß und Grau in der Anwendungsoberfläche", () => {
+Check("Fortnite.GG: nur die Original-HTTPS-Seite ohne fremde Hosts und lokale Ziele", () => {
+    foreach(var address in new[]{"https://fortnite.gg/","https://fortnite.gg/?d=route","https://fortnite.gg/legal/terms"})True(FortniteGgSite.IsSiteNavigation(address));
+    foreach(var address in new[]{"http://fortnite.gg/","https://fortnite.gg.evil.example/","https://evil.example/fortnite.gg","https://fortnite.gg@evil.example/","https://user@fortnite.gg/","https://fortnite.gg:8443/","file:///tmp/map.html","javascript:alert(1)"})True(!FortniteGgSite.IsSiteNavigation(address));
+    True(FortniteGgSite.IsExternalLink(FortniteGgSite.MapUrl)&&FortniteGgSite.IsExternalLink(FortniteGgSite.RuntimeUrl));
+    True(!FortniteGgSite.IsExternalLink("https://fortnite.gg/?unknown=1")&&!FortniteGgSite.IsExternalLink("file:///tmp/run.exe"));
+});
+Check("Palette: schwarze/graue native Oberfläche; Kartenbilder und Original-Webseite dürfen Farben behalten", () => {
     var paths=Directory.GetFiles("src/RoutePlanner.App","*.xaml").Concat(new[]{"src/RoutePlanner.App/MapView.cs","src/RoutePlanner.App/Dialogs.cs"});
     foreach(var path in paths) foreach(System.Text.RegularExpressions.Match match in System.Text.RegularExpressions.Regex.Matches(File.ReadAllText(path),"#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?(?![0-9A-Fa-f])")) {
         var rgb=match.Value[^6..];True(rgb[..2].Equals(rgb[2..4],StringComparison.OrdinalIgnoreCase)&&rgb[..2].Equals(rgb[4..6],StringComparison.OrdinalIgnoreCase));

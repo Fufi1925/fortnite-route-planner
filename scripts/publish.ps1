@@ -14,11 +14,14 @@ Get-ChildItem $output -Filter *.pdb -File | Remove-Item
 Copy-Item README.md,LICENSE -Destination $output
 Copy-Item docs,third-party,examples -Destination $output -Recurse
 @"
-ROUTE PLANNER 0.3.0 - LOKALE ROUTENPLANUNG
+ROUTE PLANNER 0.4.0 - LOKALE ROUTENPLANUNG
 
 RoutePlanner.exe unter Windows x64 starten. Keine .NET-Installation notwendig.
 Eigene Karten, Routen und Orte; keine Fortnite-Verbindung oder Live-Erkennung.
 Fortschritte werden ausschliesslich manuell bestaetigt.
+Fortnite.GG: Onlinekarte mit eigenen Cookies und Bedingungen; keine lokale Synchronisierung.
+Integrierte Ansicht braucht Microsoft Edge WebView2 Runtime (nicht mitgeliefert).
+Bei fehlender Runtime offiziellen Microsoft-Link oder normalen Browser nutzen.
 Keine Freigabe fuer Nutzung mit Fortnite. README.md und docs lesen.
 
 Die EXE enthaelt App und Runtime. Native Runtime-Dateien koennen von .NET

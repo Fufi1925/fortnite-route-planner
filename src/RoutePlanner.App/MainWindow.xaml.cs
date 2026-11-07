@@ -32,6 +32,7 @@ public partial class MainWindow : Window
     private int visited;
     private bool ready, updating, dirty, storageBlocked, closing;
     private CompactWindow? compact;
+    private WebMapWindow? webMap;
     public MainWindow() : this(null) { }
     public MainWindow(string? dataDirectory)
     {
@@ -353,6 +354,13 @@ public partial class MainWindow : Window
         Refresh(); Status(area is null ? "Suchbereich entfernt · Radiusfilter wieder aktiv" : "Suchbereich gesetzt · vorhandene Orte werden darin gefiltert");
     }
     private void ClearRegion(object sender,RoutedEventArgs e) => SetSearchArea(null);
+    private void OpenWebMap(object sender,RoutedEventArgs e)
+    {
+        if (webMap is not null) { webMap.WindowState = WindowState.Normal; webMap.Activate(); return; }
+        webMap = new WebMapWindow(store.DirectoryPath) { Owner = this };
+        webMap.Closed += (_, _) => webMap = null;
+        webMap.Show();
+    }
     private async void OpenPublicMap(object sender,RoutedEventArgs e) => await LoadPublicMapAsync();
     public async Task<bool> LoadPublicMapAsync(bool showErrors = true)
     {

@@ -1,5 +1,7 @@
 # Kartenabruf und Truhendaten – Entscheidung 2026-11-07
 
+Ergänzung 0.4: [Fortnite.GG als unveränderte Original-Webseite](FORTNITE_GG.md) bietet die gewünschten Kistenfilter und Zeichenwerkzeuge in einer getrennten WebView2-Ansicht. Das ändert nichts an der folgenden Datensatzentscheidung für den nativen Planer: keine Kopie oder Synchronisierung dieser Website-Daten und keine Live-Partie.
+
 ## Öffentliche Kartenabbildung
 
 Dokumentation: https://dash.fortnite-api.com/endpoints/map

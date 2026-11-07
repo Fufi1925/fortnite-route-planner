@@ -1,10 +1,10 @@
-# Testbericht 0.3
+# Testbericht 0.4
 
 Stand: 2026-11-07. Lokale Umgebung Linux x64, SDK 10.0.403. Der [Windows-Lauf 42356295734](https://github.com/Fufi1925/fortnite-route-planner/actions/runs/42356295734) hat 42 Kernprüfungen, den WPF-Test inklusive tatsächlichem HTTPS-Kartenabruf und den Start der selbstenthaltenden EXE erfolgreich ausgeführt. Die echte Screenshot-Abnahme führte anschließend zu höherem Kartenkontrast. Für das endgültige Release sind erneut dessen erfolgreiche CI-Ausgaben und das Artefakt `offline-verification` maßgeblich; eine bloße Kompilierung wird nicht als Windows-Ausführung ausgegeben.
 
 ## Lokal tatsächlich ausgeführt
 
-- `dotnet run --project tests/RoutePlanner.Tests -c Release`: 42 erfolgreiche Prüfungen, 0 Fehler.
+- `dotnet run --project tests/RoutePlanner.Tests -c Release`: 43 erfolgreiche Prüfungen, 0 Fehler.
 - `dotnet build tests/RoutePlanner.UiSmoke -c Release --no-restore`: Windows-UI-Test und Anwendung kompiliert.
 - `python3 scripts/audit-source.py`: ergänzende Prüfung von Anwendungsdateien, Manifest und Abhängigkeiten.
 
@@ -29,3 +29,9 @@ Die Testumgebung von GitHub Actions ist Windows Server 2025 x64. Reale Windows-1
 Zusätzliche Prüfungen für Rechtecknormalisierung, Randpunkte, ungültige und unvollständige Bereichskoordinaten, Bereichsfilter ohne Wegpunkte, Wiederherstellung des Radiusfilters, Duplikation und Export/Import. Netzwerkprüfungen verwenden ausschließlich Test-HTTP-Handler für die dokumentierten statischen Ziele: unbekannte Host-/Bildadressen, Weiterleitungen, Rate-Limits und Retry-After, Größenlimits und ungültige Bilder werden verworfen. Keine Truhen werden aus POI-Daten erzeugt.
 
 Der Windows-UI-Workflow setzt ROUTE_VERIFY_PUBLIC_MAP=1 und ruft zusätzlich tatsächlich das öffentliche Kartenbild per HTTPS ab. Er prüft die sichtbare Truhen-Datenlücke, Fan-Content-Kennzeichnung und eine gespeicherte Bereichsauswahl auf dem real geladenen Kartenbild. Für diesen zusätzlichen Integrationsschritt ist Internet erforderlich; die lokalen Tests und die lokale Planung funktionieren weiterhin ohne Internet. Maßgeblich bleiben der tatsächliche Windows-Lauf und dessen Protokolle, nicht bloß diese Beschreibung.
+
+## Ergänzungen 0.4
+
+Lokal ausgeführt: 43 Kernprüfungen einschließlich exakter Website-/Link-URL-Abgrenzung. WebView2-SDK 1.0.4314.35 aus offizieller NuGet-Quelle wiederhergestellt; WPF und UI-Test kompiliert. Tatsächlicher Browseraufruf der Originalseite auf Linux: farbige Karte geladen, Spawns aufgeklappt, Chests/Buried Chests/Rare Chests über ihre Schalter aktiviert und Stiftwerkzeug geöffnet. Kein Datensatz exportiert oder übernommen.
+
+Der folgende Windows-Workflow prüft zusätzlich Farberhalt beim Import/Speichern/Laden, den tatsächlichen Onlineabruf der farbigen Karte, die echte Fortnite.GG-Ansicht in WebView2, sichtbare und aktivierbare Kistenfilter, geladene Kartenkacheln, Aufnahme über CapturePreviewAsync und Rückweg zum lokalen Planer. Produktcode injiziert keine Skripte; DOM-Prüfungen sind ausschließlich im Testprogramm. Der EXE-Test öffnet über UI Automation nur die eigene auf dem Runner gestartete App und prüft den gepackten WebView2-Loader. Maßgeblich sind erst die tatsächlichen erfolgreichen CI-Ausgaben; fehlende Runtime oder Netzwerkfehler werden nicht als Erfolg ausgegeben.

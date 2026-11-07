@@ -25,8 +25,8 @@ public sealed class MapImages(string directory)
         input.Position = 0;
         var bitmap = new BitmapImage(); bitmap.BeginInit(); bitmap.CacheOption = BitmapCacheOption.OnLoad;
         bitmap.StreamSource = input; bitmap.DecodePixelWidth = Math.Min(width, 2048); bitmap.EndInit(); bitmap.Freeze();
-        var gray = new FormatConvertedBitmap(bitmap, PixelFormats.Gray8, null, 0); gray.Freeze();
-        var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(gray));
+        var normalized = new FormatConvertedBitmap(bitmap, PixelFormats.Bgra32, null, 0); normalized.Freeze();
+        var encoder = new PngBitmapEncoder(); encoder.Frames.Add(BitmapFrame.Create(normalized));
         using var output = new MemoryStream(); encoder.Save(output); byte[] bytes = output.ToArray();
         string id = "MAP-" + Convert.ToHexStringLower(SHA256.HashData(bytes));
         string name = Path.GetFileNameWithoutExtension(path);
@@ -34,14 +34,14 @@ public sealed class MapImages(string directory)
         var asset = new MapAsset { Id = id, Name = name, Source = "Eigene Datei: " + name };
         RoutePlanner.Core.Validation.Map(asset);
         RouteJson.WriteAtomic(ImagePath(asset), bytes);
-        return (asset, gray);
+        return (asset, normalized);
     }
     public BitmapSource Load(MapAsset asset)
     {
         RoutePlanner.Core.Validation.Map(asset);
         var path = ImagePath(asset);
         using var file = File.OpenRead(path);
-        if (file.Length > 8 * 1024 * 1024) throw new InvalidDataException("Gespeichertes Kartenbild zu groß.");
+        if (file.Length > MaxInputBytes) throw new InvalidDataException("Gespeichertes Kartenbild zu groß.");
         byte[] bytes = new byte[file.Length]; file.ReadExactly(bytes);
         if ("MAP-" + Convert.ToHexStringLower(SHA256.HashData(bytes)) != asset.Id)
             throw new InvalidDataException("Kartenbild stimmt nicht mit seiner Datenkennung überein.");

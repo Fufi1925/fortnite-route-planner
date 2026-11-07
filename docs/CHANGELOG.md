@@ -1,3 +1,7 @@
+# 0.4.0
+
+Original-Fortnite.GG in eigener, erst nach Klick geöffneter WebView2-Ansicht: farbige Karte, Chests/Buried Chests/Rare Chests und originale Zeichenwerkzeuge. Getrenntes Browserprofil, sichtbare Datenschutz-/Synchronisierungsgrenzen, Webdatenlöschung und Browser-/Runtime-Auswege. Kein Kopieren des Anbieter-Codes oder Truhendatensatzes, keine automatische Übernahme von Web-Routen. Karten im lokalen Planer und Kompaktfenster behalten neue Originalfarben; native Oberfläche weiterhin schwarz/grau. Alte Karten und Routen bleiben erhalten. Aktive Rechteckbereiche blenden auch Radiusflächen aus.
+
 # 0.3.0
 
 Öffentliche Fortnite-Kartenabbildung online abrufen und offline zwischenspeichern; Quelle, Abrufzeit und Bilddatum getrennt dokumentieren. Keine Live-Partie-Anbindung oder erfundene Truhendaten. Neuer Suchbereich per Ziehen, gespeicherte Rechteckgrenzen und Filterung vorhandener Orte ohne notwendige Wegpunkte. Schema 4 erhält ältere Routen und Karten. Separat begrenzter HTTPS-Client, fremde Ziele und Weiterleitungen abgelehnt, Retry-After respektiert. Epic-Fan-Content-Hinweis sichtbar. Vollständige Truhendaten bleiben mangels lizenziertem Anbieterzugang offen.

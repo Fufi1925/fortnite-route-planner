@@ -83,5 +83,25 @@
     ],
     "decisionDocument": "CURRENT_MAP_AND_CHESTS.md",
     "chestCoverage": "Unavailable: no licensed complete dataset or approved live match source"
+  },
+  "fortniteGgWebsite": {
+    "checkedUtc": "2026-11-07",
+    "url": "https://fortnite.gg/",
+    "httpStatus": 200,
+    "htmlSha256": "ae019b0da0fe229df5beaa8bd493f4252552e1265c6664a3da380be28289f1e2",
+    "browser": "Chromium, actual original website loaded; Spawns expanded and three chest switches enabled",
+    "categories": [
+      "Chests",
+      "Buried Chests",
+      "Rare Chests"
+    ],
+    "referenceUrls": [
+      "https://fortnite.gg/legal/terms",
+      "https://fortnite.gg/legal/privacy",
+      "https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/security",
+      "https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/distribution"
+    ],
+    "decisionDocument": "FORTNITE_GG.md",
+    "integration": "Unmodified website in isolated WebView2; no dataset redistribution or local route synchronization"
   }
 }

@@ -63,6 +63,8 @@ $checks = @{
     'ui-smoke.txt' = 'RESULT Windows WPF smoke passed'
     'published-exe-smoke.txt' = 'PASS published self-contained EXE started'
 }
+if (-not (Get-Content (Join-Path $verification 'ui-smoke.txt') -Raw).Contains('PASS Original-Fortnite.GG tatsächlich in WebView2 geladen')) { throw 'Fortnite.GG integration verification missing' }
+if (-not (Get-Content (Join-Path $verification 'published-exe-smoke.txt') -Raw).Contains('PASS published EXE loaded Fortnite.GG in WebView2')) { throw 'Published WebView2 loader verification missing' }
 foreach ($name in $checks.Keys) {
     if (-not (Get-Content (Join-Path $verification $name) -Raw).Contains($checks[$name])) {
         throw "Verification result missing: $name"
@@ -71,7 +73,8 @@ foreach ($name in $checks.Keys) {
 Compress-Archive "$verification/*" -DestinationPath (Join-Path $output 'offline-verification.zip')
 Copy-Item (Join-Path $verification 'ui-smoke/planner.png') $output
 Copy-Item (Join-Path $verification 'ui-smoke/compact.png') $output
-$assets = @('RoutePlanner.exe', 'Routenatelier-win-x64.zip', 'Lizenzen.zip', 'offline-verification.zip', 'planner.png', 'compact.png')
+Copy-Item (Join-Path $verification 'ui-smoke/fortnite-gg.png') $output
+$assets = @('RoutePlanner.exe', 'Routenatelier-win-x64.zip', 'Lizenzen.zip', 'offline-verification.zip', 'planner.png', 'compact.png', 'fortnite-gg.png')
 $hashes = foreach ($name in $assets) {
     '{0}  {1}' -f (Get-FileHash (Join-Path $output $name) -Algorithm SHA256).Hash.ToLowerInvariant(), $name
 }

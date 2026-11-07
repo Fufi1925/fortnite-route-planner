@@ -63,7 +63,7 @@ public sealed class MapView : FrameworkElement
         dc.DrawRectangle(Water, null, new Rect(0, 0, 3000, 3000));
         if (MapImage is not null)
         {
-            dc.PushOpacity(.82); dc.DrawImage(MapImage, new Rect(0, 0, 3000, 3000)); dc.Pop();
+            dc.DrawImage(MapImage, new Rect(0, 0, 3000, 3000));
         }
         for (int i = 0; i <= 3000; i += 300)
         {
@@ -74,13 +74,13 @@ public sealed class MapView : FrameworkElement
         Text(dc, "N ↑", new(90, 90), 11 / s, Muted);
         if (Route is { } route && route.MapVersion == ActiveMapVersion)
         {
-            if (route.RadiusMode == RadiusMode.Corridor && route.Points.Count > 1)
+            if (route.Area is null && route.RadiusMode == RadiusMode.Corridor && route.Points.Count > 1)
             {
                 var pen = new Pen(Corridor, route.Radius * 2) { StartLineCap = PenLineCap.Round,
                     EndLineCap = PenLineCap.Round, LineJoin = PenLineJoin.Round };
                 dc.DrawGeometry(null, pen, Path(route.Points));
             }
-            else foreach (var point in route.Points) dc.DrawEllipse(Corridor, null, P(point), route.Radius, route.Radius);
+            else if (route.Area is null) foreach (var point in route.Points) dc.DrawEllipse(Corridor, null, P(point), route.Radius, route.Radius);
             foreach (var spawn in VisibleSpawns)
             {
                 double r = 3.5 / s;

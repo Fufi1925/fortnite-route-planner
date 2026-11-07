@@ -10,7 +10,7 @@ Die Referenzen dienen als Inspiration; kein Logo, Asset oder Quellcode wurde üb
 
 ## Umsetzung
 
-Nur neutrale Grautöne mit identischen R/G/B-Werten. Hintergrund #080808, Arbeitsfläche #0A0A0A, Karten #101010, Eingaben #151515. Rahmen #242424 bis #505050; Text #777777 bis #EEEEEE. Weiß dient ausschließlich kleinen Akzenten und gut lesbarer Schrift, nicht als Eingabefläche oder Button-Hintergrund. Keine lila, blauen oder anderen farbigen Akzente. Eigene Kartenbilder werden in Graustufen mit reduzierter Deckkraft auf Schwarz gezeichnet.
+Die native Oberfläche verwendet neutrale Grautöne mit identischen R/G/B-Werten. Hintergrund #080808, Arbeitsfläche #0A0A0A, Panels #101010, Eingaben #151515. Rahmen #242424 bis #505050; Text #777777 bis #EEEEEE. Weiß dient kleinen Akzenten und gut lesbarer Schrift. Auf ausdrücklichen Nutzerwunsch ab 0.4: Kartenbilder behalten Originalfarben und volle Deckkraft. Die unveränderte Fortnite.GG-Webseite zeigt ihre eigenen Farben und Werkzeuge innerhalb eines schwarzen App-Rahmens; Branding und Bedienung werden nicht umgestaltet.
 
 Drei Bereiche: Bibliothek und Radius links, große Arbeitsfläche in der Mitte, Wegpunkte und Orte rechts. Selbst gestaltete dunkle Templates für Buttons, Textfelder, Dropdown inklusive Popup, Listen, Slider, Checkboxen und Scrollleisten. Dunkle eigene Titelleiste über normalem WPF WindowChrome; keine Hooks oder fremden Fensterzugriffe. Eigene Bestätigungsdialoge folgen demselben Farbschema. System-Dateiauswahldialoge folgen der Windows-Einstellung.
 

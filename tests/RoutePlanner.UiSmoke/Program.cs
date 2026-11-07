@@ -5,6 +5,9 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
+using System.Text.Json;
+using Microsoft.Web.WebView2.Core;
+using Microsoft.Web.WebView2.Wpf;
 using RoutePlanner.App;
 using RoutePlanner.Core;
 
@@ -30,6 +33,7 @@ public static class Program
                 window.Width = 1440; window.Height = 920; window.UpdateLayout();
                 var map = (MapView)window.FindName("PlannerMap");
                 Assert(map.Route!.Points.Count == 0 && map.VisibleSpawns.Count == 0 && store.Load().Routes.Count == 0,"Start ohne erfundene Routen, Orte oder Statistiken");
+                Assert(!Directory.Exists(Path.Combine(temp,"web-fortnite-gg")),"Fortnite.GG-Profil und Website entstehen erst nach bewusstem Öffnen");
                 Assert(((SolidColorBrush)window.Background).Color == Color.FromRgb(8,8,8),"Schwarzer Fensterhintergrund");
                 var routes = (ComboBox)window.FindName("RoutesBox");
                 Assert(((SolidColorBrush)routes.Background).Color == Color.FromRgb(21,21,21),"Dunkles Auswahlfeld");
@@ -75,6 +79,9 @@ public static class Program
                 window.OpenMapFile(imagePath);((TextBox)window.FindName("NameBox")).Text = "Bildroute";Click(window,"Speichern");
                 var imageRouteId = map.Route!.Id;
                 Assert(map.MapImage is not null && map.Route.MapVersion.StartsWith("MAP-",StringComparison.Ordinal),"Eigenes Kartenbild tatsächlich importiert");
+                var colorPath = Path.Combine(temp,"Farben.png");WriteColorImage(colorPath);
+                var colorImport = new MapImages(temp).Import(colorPath);
+                Assert(HasColor(colorImport.Image) && HasColor(new MapImages(temp).Load(colorImport.Asset)),"Farbige Karte bleibt beim Import, Speichern und Laden farbig");
                 var invalid = Path.Combine(temp,"not-image.png");File.WriteAllText(invalid,"not an image at all");
                 Reject(()=>new MapImages(temp).Import(invalid));WriteImage(invalid,128,64);Reject(()=>new MapImages(temp).Import(invalid));
                 window.Close();window = new MainWindow(temp);window.Show();
@@ -111,6 +118,7 @@ public static class Program
                     Assert(loaded,"Öffentliche Fortnite-Karte tatsächlich per HTTPS geladen: "+((TextBlock)window.FindName("StatusLabel")).Text);
                     map=(MapView)window.FindName("PlannerMap");
                     Assert(map.MapImage is not null && map.VisibleSpawns.Count==0,"Echtes Kartenbild ohne erfundene Truhenpunkte");
+                    Assert(HasColor((BitmapSource)map.MapImage!),"Öffentliche Fortnite-Karte behält echte Farben");
                     Assert(((TextBlock)window.FindName("ChestStatusLabel")).Text.Contains("kein Datensatz"),"Fehlende Truhenquelle ausdrücklich sichtbar");
                     window.SetSearchArea(new(900,1100,2200,2400));Click(window,"Speichern");
                     Assert(store.Load().Routes.Single(r=>r.Id==map.Route!.Id).Area is not null,"Bereich auf öffentlicher Karte tatsächlich gespeichert");
@@ -119,13 +127,50 @@ public static class Program
                     Click(window,"Kompakt");await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
                     compact=app.Windows.OfType<CompactWindow>().Single();await Capture(compact,"compact.png");Click(compact,"Zur Planung");
                 }
+                if(Environment.GetEnvironmentVariable("ROUTE_VERIFY_FORTNITE_GG")=="1")
+                {
+                    Click(window,"Fortnite.GG öffnen ↗");
+                    var web=app.Windows.OfType<WebMapWindow>().Single();
+                    Assert(await web.InitialNavigation.WaitAsync(TimeSpan.FromSeconds(60)),"Original-Fortnite.GG tatsächlich in WebView2 geladen");
+                    var site=(WebView2)web.FindName("Site");var browser=site.CoreWebView2;
+                    Assert(!browser.Settings.AreHostObjectsAllowed && !browser.Settings.IsWebMessageEnabled,"Webseite ohne native Hostobjekte und Nachrichtenbrücke");
+                    Console.WriteLine("WEBVIEW runtime="+browser.Environment.BrowserVersionString+" source="+browser.Source);
+                    // Test-only DOM interaction; the shipped application never injects a script or copies site data.
+                    bool filters=false;
+                    for(int i=0;i<40;i++)
+                    {
+                        filters=await browser.ExecuteScriptAsync("['spawns-chests','spawns-buried_chests','spawns-rare_chests'].every(id=>document.getElementById(id))")=="true";
+                        if(filters)break;await Task.Delay(500);
+                    }
+                    Assert(filters,"Originalseite enthält Chests, Buried Chests und Rare Chests");
+                    await browser.ExecuteScriptAsync("(()=>{let e=document.getElementById('spawns-buried_chests');if(e.getBoundingClientRect().height===0)document.querySelector('[data-search=spawns] .arrow').click();})()");
+                    await Task.Delay(500);
+                    foreach(var (label,id) in new[]{("Chests","spawns-chests"),("Buried Chests","spawns-buried_chests"),("Rare Chests","spawns-rare_chests")})
+                    {
+                        string target=JsonSerializer.Serialize(id);
+                        string activated=await browser.ExecuteScriptAsync("(()=>{let e=document.getElementById("+target+");if(!e || e.getBoundingClientRect().height===0)return false;if(!e.classList.contains('selected'))e.querySelector('span').click();return e.classList.contains('selected');})()");
+                        Assert(activated=="true","Sichtbarer Fortnite.GG-Filter bedienbar: "+label);
+                    }
+                    await Task.Delay(1000);
+                    string tiles=await browser.ExecuteScriptAsync("document.querySelectorAll('.leaflet-tile-loaded').length>0");
+                    Assert(tiles=="true","Echte farbige Kartenkacheln der Originalseite geladen");
+                    Directory.CreateDirectory("artifacts/ui-smoke");
+                    using(var output=File.Create("artifacts/ui-smoke/fortnite-gg.png"))await browser.CapturePreviewAsync(CoreWebView2CapturePreviewImageFormat.Png,output);
+                    Click(web,"Zur lokalen Planung");
+                    Assert(window.IsVisible && !app.Windows.OfType<WebMapWindow>().Any(),"Rückweg aus Onlinekarte ohne Verlust der lokalen Route");
+                }
                 Console.WriteLine("RESULT Windows WPF smoke passed");exitCode = 0;
             }
             catch (Exception ex) { Console.WriteLine("FAIL Windows WPF smoke: "+ex); }
             finally
             {
                 if (window is not null) { Click(window,"Speichern");window.Close(); }
-                if (Directory.Exists(temp)) Directory.Delete(temp,true);
+                for(int attempt=0;Directory.Exists(temp)&&attempt<30;attempt++)
+                {
+                    try { Directory.Delete(temp,true); }
+                    catch(Exception ex) when(ex is IOException or UnauthorizedAccessException)
+                    { if(attempt==29)Console.WriteLine("NOTE WebView2-Profil wird auf dem temporären Runner noch freigegeben");else await Task.Delay(500); }
+                }
                 app.Shutdown(exitCode);
             }
         });
@@ -154,5 +199,19 @@ public static class Program
     {
         var bitmap=BitmapSource.Create(width,height,96,96,PixelFormats.Gray8,null,Enumerable.Range(0,width*height).Select(i=>(byte)(i%128)).ToArray(),width);
         var encoder=new PngBitmapEncoder();encoder.Frames.Add(BitmapFrame.Create(bitmap));using var file=File.Create(path);encoder.Save(file);
+    }
+    private static void WriteColorImage(string path)
+    {
+        byte[] pixels=new byte[64*64*4];
+        for(int i=0;i<pixels.Length;i+=4){pixels[i]=30;pixels[i+1]=90;pixels[i+2]=180;pixels[i+3]=255;}
+        var bitmap=BitmapSource.Create(64,64,96,96,PixelFormats.Bgra32,null,pixels,64*4);
+        var encoder=new PngBitmapEncoder();encoder.Frames.Add(BitmapFrame.Create(bitmap));using var output=File.Create(path);encoder.Save(output);
+    }
+    private static bool HasColor(BitmapSource image)
+    {
+        var bitmap=new FormatConvertedBitmap(image,PixelFormats.Bgra32,null,0);
+        byte[] pixels=new byte[bitmap.PixelWidth*bitmap.PixelHeight*4];bitmap.CopyPixels(pixels,bitmap.PixelWidth*4,0);
+        for(int i=0;i<pixels.Length;i+=4)if(pixels[i]!=pixels[i+1]||pixels[i]!=pixels[i+2])return true;
+        return false;
     }
 }

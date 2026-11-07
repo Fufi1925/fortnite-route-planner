@@ -1,4 +1,3 @@
-$ /tmp/route-dotnet/dotnet run --project tests/RoutePlanner.Tests -c Release
 PASS Segment: senkrechter Abstand
 PASS Segment: Projektion vor/nach Endpunkt
 PASS Segment: degenerierter Abschnitt
@@ -39,9 +38,8 @@ PASS Kartenabruf: Fehler und Weiterleitung ohne Wiederholung
 PASS Kartenabruf: Retry-After verhindert weitere Anfragen
 PASS Kartenabruf: ungültiges Bild und übergroße Antwort ablehnen
 PASS Kartenquelle: Metadaten und Abrufdatum bleiben nachvollziehbar
-PASS Palette: nur Schwarz, Weiß und Grau in der Anwendungsoberfläche
-PROFILE index=9.4ms query-mean=8.26ms managed=16.0MiB working-set=89.6MiB
+PASS Fortnite.GG: nur die Original-HTTPS-Seite ohne fremde Hosts und lokale Ziele
+PASS Palette: schwarze/graue native Oberfläche; Kartenbilder und Original-Webseite dürfen Farben behalten
+PROFILE index=7.3ms query-mean=8.52ms managed=18.1MiB working-set=88.9MiB
 PASS Performance: 100.000 Punkte / 100 Filter, Referenzergebnis
-RESULT 42 passed; 0 failed
-
-EXIT 0
+RESULT 43 passed; 0 failed
