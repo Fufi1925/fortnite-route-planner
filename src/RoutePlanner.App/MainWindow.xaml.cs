@@ -165,7 +165,12 @@ public partial class MainWindow : Window
     private void SelectRoute(object sender, SelectionChangedEventArgs e)
     {
         if (!ready || updating || RoutesBox.SelectedItem is not RoutePlan route || route.Id == current.Id) return;
-        if (MayLeave()) SwitchTo(route.Copy(),false); else Refresh();
+        // Finish the ComboBox selection transaction before rebuilding its item source.
+        Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() =>
+        {
+            if (closing || RoutesBox.SelectedItem is not RoutePlan selected || selected.Id == current.Id) return;
+            if (MayLeave()) SwitchTo(selected.Copy(),false); else Refresh();
+        }));
     }
     private void NewRoute(object sender, RoutedEventArgs e)
     { if (MayLeave()) SwitchTo(new() { MapVersion = activeMap?.Id ?? MapSpace.WorkspaceId },false); }

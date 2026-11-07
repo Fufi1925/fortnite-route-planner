@@ -75,9 +75,11 @@ public static class Program
                 window.Width = 1440;window.Height = 920;window.UpdateLayout();
                 routes = (ComboBox)window.FindName("RoutesBox");
                 routes.SelectedItem = routes.Items.OfType<RoutePlan>().Single(r=>r.Id == imageRouteId);
+                await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
                 map = (MapView)window.FindName("PlannerMap");
-                Assert(map.MapImage is not null,"Kartenbild nach Neustart mit Hashprüfung geladen");
+                Assert(map.MapImage is not null,$"Kartenbild nach Neustart mit Hashprüfung geladen (Route {map.Route?.Id}; erwartet {imageRouteId}; Status {((TextBlock)window.FindName("StatusLabel")).Text})");
                 routes.SelectedItem = routes.Items.OfType<RoutePlan>().Single(r=>r.Id == originalId);
+                await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
                 map.ZoomBy(1.2);map.Fit();
                 await Capture(window,"planner-reloaded.png");
                 Click(window,"Route starten  →");
