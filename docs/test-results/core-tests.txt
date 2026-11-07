@@ -12,8 +12,7 @@ PASS Planungszustand: leerer Name verhindert keinen Kartenfilter
 PASS Kartengrenzen: Ecken zulässig, NaN/Infinity/außerhalb ungültig
 PASS Index: deterministisch identisch mit vollständiger Suche
 PASS Import/Export: vollständiger Roundtrip
-PASS Mitgelieferte Beispieldatei: importierbar und passende Karte
-PASS Schema: Migration v1 nach v2
+PASS Schema: Migration v1/v2 nach v3 ohne simulierten Verlauf
 PASS Schema: unbekannte und fehlende Version ablehnen
 PASS Version: alte/fremde Karte warnbar und keine Spawns
 PASS Import: defekt, null, doppelte Schlüssel, fremde Felder
@@ -23,10 +22,14 @@ PASS Import: Größen-, Punkt-, Namens- und ID-Limits
 PASS Duplikation: unabhängige Punkte und neue ID
 PASS Speichern/Laden/Löschen: atomarer Dateiaustausch
 PASS Beschädigter Datenträger bleibt nach Load unverändert
-PASS Demo: deterministische Events und echte Reducer-Integration
-PASS Demo: Start fehlt, Zeit rückwärts, Position ungültig
-PROFILE index=10.2ms query-mean=13.33ms managed=16.8MiB working-set=70.3MiB
+PASS Manueller Routengang: nur Aktionen und gemessene Zeit
+PASS Manueller Routengang: Abbruch und unveränderliche Routenkopie
+PASS Karten und Orte: echte Einträge speichern und passend filtern
+PASS Karten: Pfade, fehlende Metadaten und falsche Orte ablehnen
+PASS Keine automatischen Daten bei neuem Start
+PASS Palette: nur Schwarz, Weiß und Grau in der Anwendungsoberfläche
+PROFILE index=7.5ms query-mean=11.85ms managed=23.0MiB working-set=88.8MiB
 PASS Performance: 100.000 Punkte / 100 Filter, Referenzergebnis
-RESULT 27 passed; 0 failed
+RESULT 30 passed; 0 failed
 
 EXIT 0

@@ -5,11 +5,10 @@ on:
       run_id:
         description: Successful Windows build run ID
         required: true
-        default: '42321631315'
       tag:
         description: Release version tag
         required: true
-        default: 'v0.1.0'
+        default: 'v0.2.0'
 permissions:
   contents: read
 jobs:

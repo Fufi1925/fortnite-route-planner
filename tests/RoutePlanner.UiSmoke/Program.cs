@@ -1,5 +1,6 @@
-using System.Windows;
 using System.IO;
+using System.Globalization;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -14,53 +15,89 @@ public static class Program
     public static int Main()
     {
         int exitCode = 1;
-        string temp = Path.Combine(Path.GetTempPath(), "route-ui-"+Guid.NewGuid());
-        var app = new RoutePlanner.App.App();
-        app.InitializeComponent(); app.OpenPlannerOnStartup = false; app.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+        string temp = Path.Combine(Path.GetTempPath(),"route-ui-"+Guid.NewGuid());
+        var app = new RoutePlanner.App.App(); app.InitializeComponent(); app.OpenPlannerOnStartup = false;
+        app.ShutdownMode = ShutdownMode.OnExplicitShutdown;
         app.Dispatcher.BeginInvoke(async () =>
         {
             MainWindow? window = null;
             try
             {
-                var store = new LocalStore(temp); store.Save(new() { Routes = [DemoData.Example()] });
+                var store = new LocalStore(temp);
                 window = new MainWindow(temp); window.Show();
                 await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+                // Render the real window at a common desktop size, independent of runner screen resolution.
+                window.Width = 1440; window.Height = 920; window.UpdateLayout();
                 var map = (MapView)window.FindName("PlannerMap");
-                Assert(map.ActualWidth > 100 && map.Route?.Points.Count == 5, "WPF-Fenster und Karte geladen");
-                Assert(window.Background is SolidColorBrush background && background.Color == Color.FromRgb(16,18,22), "Dunkler Fensterhintergrund angewendet");
-                Assert(((ComboBox)window.FindName("RoutesBox")).Foreground is SolidColorBrush comboText && comboText.Color == Color.FromRgb(24,32,42), "Lesbarer Auswahltext");
-                Capture(window, "planner.png");
-                var name = (TextBox)window.FindName("NameBox");name.Text = "UI-Test gespeichert";
-                Click(window, "Speichern");
-                Assert(store.Load().Routes[0].Name == name.Text, "Speichern über echten Button-Handler");
-                var radius = (Slider)window.FindName("RadiusSlider");radius.Value = 0;
-                Assert(map.VisibleSpawns.Count == new SpawnIndex(DemoData.Spawns).Query(map.Route!).Count, "Radiusfilter mit Oberfläche verbunden");
-                radius.Value = 110;Click(window, "Speichern");
-                map.ZoomBy(1.2); map.Fit();
-                Assert(map.Route!.Points.Count == 5, "Zoomen/Einpassen erhält Route");
-                Click(window, "Laden");
-                Assert(((TextBox)window.FindName("NameBox")).Text == "UI-Test gespeichert", "Laden über Button");
-                Click(window, "Demo abspielen");
-                await Task.Delay(6500);
-                Assert(store.Load().DemoHistory.Count == 1, "Demo-Timer, Provider und Statistik gespeichert");
-                Click(window, "Kompaktansicht ↗");
+                Assert(map.Route!.Points.Count == 0 && map.VisibleSpawns.Count == 0 && store.Load().Routes.Count == 0,"Start ohne erfundene Routen, Orte oder Statistiken");
+                Assert(((SolidColorBrush)window.Background).Color == Color.FromRgb(8,8,8),"Schwarzer Fensterhintergrund");
+                var routes = (ComboBox)window.FindName("RoutesBox");
+                Assert(((SolidColorBrush)routes.Background).Color == Color.FromRgb(21,21,21),"Dunkles Auswahlfeld");
+                Capture(window,"planner-empty.png");
+                ((TextBox)window.FindName("NameBox")).Text = "Meine Route";
+                foreach (var point in new MapPoint[] {new(600,2400),new(900,1900),new(1450,1600),new(1700,950),new(2400,650)})
+                {
+                    ((TextBox)window.FindName("PointX")).Text = point.X.ToString(CultureInfo.CurrentCulture);
+                    ((TextBox)window.FindName("PointY")).Text = point.Y.ToString(CultureInfo.CurrentCulture);
+                    Click(window,"Punkt hinzufügen");
+                }
+                Click(window,"Speichern");
+                Assert(store.Load().Routes.Single().Points.Count == 5 && store.Load().Routes.Single().Name == "Meine Route","Echte Wegpunktbearbeitung und Speicherung");
+                var originalId = map.Route!.Id;
+                window.AddManualMarker(new(910,1890));
+                Assert(store.Load().Maps.Single().Spawns.Single().ManuallyConfirmed,"Eigener Ort dauerhaft gespeichert");
+                var markerFile = Path.Combine(temp,"markers.json");
+                RouteJson.WriteAtomic(markerFile,RouteJson.Serialize(new(){Maps=[new(){Source="Eigene vermessene Koordinaten",Spawns=[new("p",new(1700,960))]}]}));
+                window.ImportMarkerFile(markerFile);
+                Assert(store.Load().Maps.Single().Spawns.Count == 2 && store.Load().Maps.Single().Spawns.Last().Source == "Eigene vermessene Koordinaten","Ortsimport und Quellenangabe gespeichert");
+                var radius = (Slider)window.FindName("RadiusSlider"); radius.Value = 0;
+                Assert(map.VisibleSpawns.Count == 0,"Radiusfilter blendet außerhalb liegende Orte aus");
+                radius.Value = 110;Click(window,"Speichern");
+                Assert(map.VisibleSpawns.Count == 2,"Radiusfilter zeigt passende Orte");
+                Capture(window,"planner.png");
+                window.ExportRouteFile(Path.Combine(temp,"export.json"));
+                window.ImportRouteFile(Path.Combine(temp,"export.json"));Click(window,"Speichern");
+                Assert(store.Load().Routes.Count == 2 && map.Route!.Id != originalId && map.Route.Points.Count == 5,"Export und Import mit unabhängiger Routen-ID");
+                Click(window,"Duplizieren");Click(window,"Speichern");
+                Assert(store.Load().Routes.Count == 3,"Routenduplikation");
+                Click(window,"Laden");Assert(map.Route!.Points.Count == 5,"Lokale Bibliothek neu geladen");
+                var imagePath = Path.Combine(temp,"Eigene Karte.png");WriteImage(imagePath,128,128);
+                window.OpenMapFile(imagePath);((TextBox)window.FindName("NameBox")).Text = "Bildroute";Click(window,"Speichern");
+                var imageRouteId = map.Route!.Id;
+                Assert(map.MapImage is not null && map.Route.MapVersion.StartsWith("MAP-",StringComparison.Ordinal),"Eigenes Kartenbild tatsächlich importiert");
+                var invalid = Path.Combine(temp,"not-image.png");File.WriteAllText(invalid,"not an image at all");
+                Reject(()=>new MapImages(temp).Import(invalid));WriteImage(invalid,128,64);Reject(()=>new MapImages(temp).Import(invalid));
+                window.Close();window = new MainWindow(temp);window.Show();
+                await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+                window.Width = 1440;window.Height = 920;window.UpdateLayout();
+                routes = (ComboBox)window.FindName("RoutesBox");
+                routes.SelectedItem = routes.Items.OfType<RoutePlan>().Single(r=>r.Id == imageRouteId);
+                map = (MapView)window.FindName("PlannerMap");
+                Assert(map.MapImage is not null,"Kartenbild nach Neustart mit Hashprüfung geladen");
+                routes.SelectedItem = routes.Items.OfType<RoutePlan>().Single(r=>r.Id == originalId);
+                map.ZoomBy(1.2);map.Fit();
+                Capture(window,"planner.png");
+                Click(window,"Route starten  →");
                 await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
                 var compact = app.Windows.OfType<CompactWindow>().Single();
-                Assert(compact.IsVisible && !window.IsVisible && !compact.Topmost, "Kompaktansicht, standardmäßig nicht Topmost");
-                Assert(compact.Background is SolidColorBrush compactBackground && compactBackground.Color == Color.FromRgb(16,18,22), "Dunkler Kompaktfensterhintergrund angewendet");
-                var topmost = Descendants(compact).OfType<CheckBox>().Single();
-                topmost.IsChecked = true;Assert(compact.Topmost, "Normales Topmost aktiviert");
-                topmost.IsChecked = false;Capture(compact, "compact.png");
-                Click(compact, "Zur Planung");
-                Assert(window.IsVisible, "Zuverlässiger Weg zurück zur Planung");
-                Click(window, "Neu");Click(window, "Speichern");
-                Assert(((MapView)window.FindName("PlannerMap")).Route!.Points.Count == 0, "Leere Karte speicherbar");
+                Assert(compact.IsVisible && !window.IsVisible && !compact.Topmost,"Kompaktfenster und sichere Standardeinstellung");
+                Assert(((SolidColorBrush)compact.Background).Color == Color.FromRgb(8,8,8),"Schwarzer Kompaktfensterhintergrund");
+                var pin = Descendants(compact).OfType<CheckBox>().Single();pin.IsChecked = true;Assert(compact.Topmost,"Normales Topmost");pin.IsChecked = false;
+                await Task.Delay(1200);
+                Assert(store.Load().Activities.Count == 0,"Kein automatisch erfundener Fortschritt");
+                Capture(compact,"compact.png");
+                for (int i=0;i<5;i++) Click(compact,"Wegpunkt erreicht  →");
+                var activity = store.Load().Activities.Single();
+                Assert(activity.Completed && activity.VisitedPoints == 5 && activity.DurationSeconds >= 1,"Nur manuelle Fortschritte und tatsächliche Laufzeit gespeichert");
+                Click(compact,"Zur Planung");Assert(window.IsVisible,"Rückweg aus Kompaktfenster");
+                Click(window,"Verlauf öffnen");Capture(window,"history.png");Click(window,"← Zur Planung");
+                Click(window,"+ Neue Route");Click(window,"Speichern");
+                Assert(((MapView)window.FindName("PlannerMap")).Route!.Points.Count == 0,"Leere eigene Route nutzbar");
                 Console.WriteLine("RESULT Windows WPF smoke passed");exitCode = 0;
             }
-            catch (Exception ex) { Console.WriteLine("FAIL Windows WPF smoke: " + ex); }
+            catch (Exception ex) { Console.WriteLine("FAIL Windows WPF smoke: "+ex); }
             finally
             {
-                // Clear any dirty state by saving through the regular app action before closing.
                 if (window is not null) { Click(window,"Speichern");window.Close(); }
                 if (Directory.Exists(temp)) Directory.Delete(temp,true);
                 app.Shutdown(exitCode);
@@ -68,12 +105,11 @@ public static class Program
         });
         app.Run();return exitCode;
     }
-    private static void Assert(bool condition,string name)
-    { if (!condition) throw new Exception(name);Console.WriteLine("PASS "+name); }
+    private static void Assert(bool condition,string name) { if(!condition)throw new Exception(name);Console.WriteLine("PASS "+name); }
+    private static void Reject(Action action) {try{action();}catch(InvalidDataException){Console.WriteLine("PASS Ungültige Bilddatei abgelehnt");return;}throw new Exception("Invalid image accepted");}
     private static IEnumerable<DependencyObject> Descendants(DependencyObject parent)
     {
-        for (int i=0;i<VisualTreeHelper.GetChildrenCount(parent);i++)
-        {
+        for(int i=0;i<VisualTreeHelper.GetChildrenCount(parent);i++) {
             var child=VisualTreeHelper.GetChild(parent,i);yield return child;
             foreach(var item in Descendants(child))yield return item;
         }
@@ -82,10 +118,14 @@ public static class Program
         .Single(b=>b.Content?.ToString()==content).RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
     private static void Capture(Window window,string name)
     {
-        window.UpdateLayout();
-        var bitmap=new RenderTargetBitmap((int)window.ActualWidth,(int)window.ActualHeight,96,96,PixelFormats.Pbgra32);
+        window.UpdateLayout();var bitmap=new RenderTargetBitmap((int)window.ActualWidth,(int)window.ActualHeight,96,96,PixelFormats.Pbgra32);
         bitmap.Render(window);var encoder=new PngBitmapEncoder();encoder.Frames.Add(BitmapFrame.Create(bitmap));
         var directory=Path.GetFullPath("artifacts/ui-smoke");Directory.CreateDirectory(directory);
         using var file=File.Create(Path.Combine(directory,name));encoder.Save(file);
+    }
+    private static void WriteImage(string path,int width,int height)
+    {
+        var bitmap=BitmapSource.Create(width,height,96,96,PixelFormats.Gray8,null,Enumerable.Range(0,width*height).Select(i=>(byte)(i%128)).ToArray(),width);
+        var encoder=new PngBitmapEncoder();encoder.Frames.Add(BitmapFrame.Create(bitmap));using var file=File.Create(path);encoder.Save(file);
     }
 }

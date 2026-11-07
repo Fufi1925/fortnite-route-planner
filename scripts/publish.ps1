@@ -14,11 +14,11 @@ Get-ChildItem $output -Filter *.pdb -File | Remove-Item
 Copy-Item README.md,LICENSE -Destination $output
 Copy-Item docs,third-party,examples -Destination $output -Recurse
 @"
-ROUTENATELIER 0.1.0 - OFFLINE / DEMO
+ROUTE PLANNER 0.2.0 - LOKALE ROUTENPLANUNG
 
 RoutePlanner.exe unter Windows x64 starten. Keine .NET-Installation notwendig.
-Nur neutrale Beispieldaten; keine Fortnite-Verbindung oder Live-Erkennung.
-Kompaktansicht ausschliesslich ueber einer neutralen Testanwendung pruefen.
+Eigene Karten, Routen und Orte; keine Fortnite-Verbindung oder Live-Erkennung.
+Fortschritte werden ausschliesslich manuell bestaetigt.
 Keine Freigabe fuer Nutzung mit Fortnite. README.md und docs lesen.
 
 Die EXE enthaelt App und Runtime. Native Runtime-Dateien koennen von .NET

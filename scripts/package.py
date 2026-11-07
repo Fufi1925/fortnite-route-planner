@@ -18,9 +18,9 @@ for name in ("README.md", "LICENSE"):
 for name in ("docs", "third-party", "examples"):
     shutil.copytree(root / name, output / name, dirs_exist_ok=True)
 (output / "STARTEN.txt").write_text(
-    "ROUTENATELIER 0.1.0 - OFFLINE / DEMO\n\n"
+    "ROUTE PLANNER 0.2.0 - LOKALE ROUTENPLANUNG\n\n"
     "RoutePlanner.exe unter Windows x64 starten. Keine .NET-Installation notwendig.\n"
-    "Nur neutrale Testdaten, keine Fortnite-Verbindung oder Live-Erkennung.\n"
+    "Eigene Karten und Daten, keine Fortnite-Verbindung oder Live-Erkennung.\n"
     "Keine Freigabe fuer Verwendung mit Fortnite. README.md und docs lesen.\n"
     "Die Runtime kann native Dateien ins temporaere .net-Verzeichnis entpacken.\n"
     "Lizenzen und Dokumentation sind separate Dateien im Paket.\n",

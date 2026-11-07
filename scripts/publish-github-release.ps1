@@ -20,8 +20,8 @@ $notes = "docs/releases/$Tag.md"
 if (-not (Test-Path $notes -PathType Leaf)) { throw "Missing release notes: $notes" }
 $releaseJson = gh release view $Tag --repo $repository --json isDraft,targetCommitish
 if ($LASTEXITCODE -ne 0) {
-    gh release create $Tag --repo $repository --draft --prerelease --target $buildRun.head_sha `
-        --title "$Tag - Windows Offline-Demo" --notes-file $notes
+    gh release create $Tag --repo $repository --draft --target $buildRun.head_sha `
+        --title "$Tag - Windows Routenplaner" --notes-file $notes
     Assert-GhSuccess
     $releaseJson = gh release view $Tag --repo $repository --json isDraft,targetCommitish
     Assert-GhSuccess
@@ -58,8 +58,8 @@ Compress-Archive "$licenses/*" -DestinationPath (Join-Path $output 'Lizenzen.zip
 $verification = Join-Path $output 'verification'
 gh run download $RunId --repo $repository --name offline-verification --dir $verification
 Assert-GhSuccess
+if ((Get-Content (Join-Path $verification 'core-tests.txt') -Raw) -notmatch 'RESULT [1-9][0-9]* passed; 0 failed') { throw 'Core verification failed' }
 $checks = @{
-    'core-tests.txt' = 'RESULT 27 passed; 0 failed'
     'ui-smoke.txt' = 'RESULT Windows WPF smoke passed'
     'published-exe-smoke.txt' = 'PASS published self-contained EXE started'
 }
@@ -69,7 +69,9 @@ foreach ($name in $checks.Keys) {
     }
 }
 Compress-Archive "$verification/*" -DestinationPath (Join-Path $output 'offline-verification.zip')
-$assets = @('RoutePlanner.exe', 'Routenatelier-win-x64.zip', 'Lizenzen.zip', 'offline-verification.zip')
+Copy-Item (Join-Path $verification 'ui-smoke/planner.png') $output
+Copy-Item (Join-Path $verification 'ui-smoke/compact.png') $output
+$assets = @('RoutePlanner.exe', 'Routenatelier-win-x64.zip', 'Lizenzen.zip', 'offline-verification.zip', 'planner.png', 'compact.png')
 $hashes = foreach ($name in $assets) {
     '{0}  {1}' -f (Get-FileHash (Join-Path $output $name) -Algorithm SHA256).Hash.ToLowerInvariant(), $name
 }
@@ -89,7 +91,7 @@ foreach ($name in $assets) {
         throw "Release asset verification failed: $name"
     }
 }
-gh release edit $Tag --repo $repository --notes-file $notes --draft=false
+gh release edit $Tag --repo $repository --notes-file $notes --draft=false --latest
 Assert-GhSuccess
 $url = "https://github.com/$repository/releases/tag/$Tag"
 Write-Output "Published verified release: $url"

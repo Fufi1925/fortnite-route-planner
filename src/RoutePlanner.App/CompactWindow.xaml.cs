@@ -1,33 +1,33 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using RoutePlanner.Core;
+using Geometry = RoutePlanner.Core.Geometry;
 
 namespace RoutePlanner.App;
 public partial class CompactWindow : Window
 {
-    public CompactWindow()
-    {
-        InitializeComponent();
-        Loaded += (_, _) => PlaceTopRight();
-    }
-    // WPF work area uses device-independent units, including primary taskbar exclusion.
-    // Dragging the standard OS title bar moves this ordinary window to any other monitor.
+    public event Action? AdvanceRequested;
+    public event Action? StopRequested;
+    public CompactWindow() { InitializeComponent(); Loaded += (_,_) => PlaceTopRight(); }
     private void PlaceTopRight()
     {
         var area = SystemParameters.WorkArea;
-        Width = Math.Min(Width, area.Width); Height = Math.Min(Height, area.Height);
-        Left = Math.Max(area.Left, area.Right-Width-16); Top = area.Top+16;
+        Width = Math.Min(Width,area.Width); Height = Math.Min(Height,area.Height);
+        Left = Math.Max(area.Left,area.Right-Width-16); Top = area.Top+16;
     }
-    public void UpdateRoute(RoutePlan route, IReadOnlyList<SpawnPoint> spawns, HashSet<string> confirmed, MapPoint? position)
+    public void UpdateRoute(RoutePlan route,string mapVersion,ImageSource? image,IReadOnlyList<SpawnPoint> spawns,
+        HashSet<string> confirmed,int visited,bool running,string progress)
     {
         RouteTitle.Text = route.Name;
-        Metrics.Text = DemoData.IsCurrent(route)
-            ? $"{route.Points.Count} Punkte · {Geometry.Length(route.Points):0} KE · {spawns.Count} mögliche Spawns\n{route.MapVersion}"
-            : "VERALTETE / FREMDE KARTE · Darstellung gesperrt\n" + route.MapVersion;
-        CompactMap.Route = route; CompactMap.VisibleSpawns = spawns; CompactMap.Confirmed = confirmed;
-        CompactMap.DemoPosition = position; CompactMap.InvalidateVisual();
+        Metrics.Text = $"{route.Points.Count} Wegpunkte · {Geometry.Length(route.Points):0} KE geplante Strecke";
+        CompactMap.Route = route; CompactMap.ActiveMapVersion = mapVersion; CompactMap.MapImage = image;
+        CompactMap.VisibleSpawns = spawns; CompactMap.Confirmed = confirmed; CompactMap.VisitedPoints = visited; CompactMap.InvalidateVisual();
+        ProgressLabel.Text = running ? progress : "Keine aktive Route · manuelle Planung";
+        NextPointButton.IsEnabled = running;
     }
-    private void TopmostChanged(object sender, RoutedEventArgs e) => Topmost = ((CheckBox)sender).IsChecked == true;
-    private void ReturnToPlanner(object sender, RoutedEventArgs e) => Close();
-    private void ResetPosition(object sender, RoutedEventArgs e) => PlaceTopRight();
+    private void AdvancePoint(object sender,RoutedEventArgs e) => AdvanceRequested?.Invoke();
+    private void StopRoute(object sender,RoutedEventArgs e) => StopRequested?.Invoke();
+    private void TopmostChanged(object sender,RoutedEventArgs e) => Topmost = ((CheckBox)sender).IsChecked == true;
+    private void ReturnToPlanner(object sender,RoutedEventArgs e) => Close();
 }

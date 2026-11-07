@@ -9,7 +9,7 @@ try {
     }
     $applicationProcess.Refresh()
     if ($applicationProcess.HasExited -or $applicationProcess.MainWindowHandle -eq 0 `
-        -or $applicationProcess.MainWindowTitle -notlike '*Routenatelier*Offline-Demo*') {
+        -or $applicationProcess.MainWindowTitle -notlike '*Route Planner*Lokal*') {
         throw 'Published application did not display the expected planner window'
     }
     Write-Output "PASS published self-contained EXE started: $($applicationProcess.MainWindowTitle)"

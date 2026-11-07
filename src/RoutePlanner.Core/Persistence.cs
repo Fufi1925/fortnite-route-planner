@@ -1,5 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 
 namespace RoutePlanner.Core;
 
@@ -20,28 +22,46 @@ public static class Validation
         if (route.Points is null || route.Points.Count > 500 || route.Points.Any(p => !Geometry.IsOnMap(p)))
             throw new InvalidDataException("Maximal 500 Wegpunkte innerhalb 0…3000 erlaubt.");
     }
-    private static void Text(string? text, int max, string label)
+    public static void Text(string? text, int max, string label)
     {
         if (string.IsNullOrWhiteSpace(text) || text.Length > max || text.Any(char.IsControl))
             throw new InvalidDataException($"{label}: leer, zu lang oder Steuerzeichen enthalten.");
     }
     public static void Library(LibraryDocument document)
     {
-        if (document.SchemaVersion != 2 || document.Routes is null || document.DemoHistory is null
-            || document.Routes.Count > 200 || document.DemoHistory.Count > 200)
+        if (document.SchemaVersion != 3 || document.Routes is null || document.Maps is null || document.Activities is null
+            || document.Routes.Count > 200 || document.Maps.Count > 100 || document.Activities.Count > 200)
             throw new InvalidDataException("Bibliothek: ungültige Version oder zu viele Einträge.");
         foreach (var route in document.Routes) Route(route);
         if (document.Routes.Select(r => r.Id).Distinct().Count() != document.Routes.Count)
             throw new InvalidDataException("Doppelte Routen-ID.");
-        foreach (var match in document.DemoHistory)
+        if (document.Maps.Select(m => m?.Id).Distinct().Count() != document.Maps.Count)
+            throw new InvalidDataException("Doppelte Karten-ID.");
+        foreach (var map in document.Maps) Map(map);
+        foreach (var match in document.Activities)
         {
             if (match is null || match.Id == Guid.Empty || match.RouteId == Guid.Empty
                 || match.DurationSeconds < 0 || match.DurationSeconds > 86400
-                || !double.IsFinite(match.Distance) || match.Distance < 0 || match.Distance > 3_000_000
-                || match.SimulatedStops < 0 || match.SimulatedStops > 500)
-                throw new InvalidDataException("Ungültige Demo-Statistik.");
+                || !double.IsFinite(match.PlannedDistance) || match.PlannedDistance < 0 || match.PlannedDistance > 3_000_000
+                || match.TotalPoints < 1 || match.TotalPoints > 500 || match.VisitedPoints < 0 || match.VisitedPoints > match.TotalPoints
+                || match.Completed != (match.VisitedPoints == match.TotalPoints))
+                throw new InvalidDataException("Ungültiger Routenverlauf.");
             Text(match.RouteName, 120, "Statistikname"); Text(match.MapVersion, 100, "Statistikversion");
         }
+    }
+    public static void Map(MapAsset? map)
+    {
+        if (map is null || map.Id is null || map.Id != MapSpace.WorkspaceId && !Regex.IsMatch(map.Id, "^MAP-[a-f0-9]{64}$"))
+            throw new InvalidDataException("Ungültige Karten-ID.");
+        Text(map.Name, 120, "Kartenname"); Text(map.Source, 200, "Quelle");
+        if (map.Spawns is null || map.Spawns.Count > 10000) throw new InvalidDataException("Maximal 10.000 Orte pro Karte.");
+        foreach (var point in map.Spawns)
+        {
+            if (point is null || !Geometry.IsOnMap(point.Position)) throw new InvalidDataException("Ungültiger Ort.");
+            Text(point.Id, 80, "Orts-ID");
+            if (point.Source is not null) Text(point.Source, 200, "Ortsquelle");
+        }
+        if (map.Spawns.Select(p => p.Id).Distinct().Count() != map.Spawns.Count) throw new InvalidDataException("Doppelte Orts-ID.");
     }
 }
 
@@ -69,12 +89,13 @@ public static class RouteJson
             using var json = JsonDocument.Parse(bytes, new() { MaxDepth = 20 });
             RejectDuplicateKeys(json.RootElement);
             if (!json.RootElement.TryGetProperty("schemaVersion", out var version)
-                || !version.TryGetInt32(out int schema) || schema is not (1 or 2))
+                || !version.TryGetInt32(out int schema) || schema is not (1 or 2 or 3))
                 throw new InvalidDataException("Unbekannte oder fehlende Schemaversion.");
-            // v1 had routes only. Explicit migration preserves all routes and creates empty history.
-            var doc = JsonSerializer.Deserialize<LibraryDocument>(bytes, Options)
+            // Preserve old routes but never turn their simulated history into real activities.
+            var node = JsonNode.Parse(bytes)!.AsObject();
+            if (schema < 3) { node.Remove("demoHistory"); node["schemaVersion"] = 3; }
+            var doc = node.Deserialize<LibraryDocument>(Options)
                 ?? throw new InvalidDataException("Leere Bibliothek.");
-            if (schema == 1) doc = doc with { SchemaVersion = 2 };
             // Required route identity/version must come from the file, never from model defaults.
             foreach (var r in json.RootElement.GetProperty("routes").EnumerateArray())
             {
@@ -84,6 +105,16 @@ public static class RouteJson
                     if (!p.TryGetProperty("x", out _) || !p.TryGetProperty("y", out _))
                         throw new InvalidDataException("Wegpunkt benötigt x und y.");
             }
+            if (json.RootElement.TryGetProperty("maps", out var maps))
+                foreach (var map in maps.EnumerateArray())
+                {
+                    foreach (var field in new[] { "id", "name", "source", "spawns" })
+                        if (!map.TryGetProperty(field, out _)) throw new InvalidDataException($"Kartenfeld {field} fehlt.");
+                    foreach (var point in map.GetProperty("spawns").EnumerateArray())
+                        if (!point.TryGetProperty("id", out _) || !point.TryGetProperty("position", out var position)
+                            || !position.TryGetProperty("x", out _) || !position.TryGetProperty("y", out _))
+                            throw new InvalidDataException("Ort benötigt ID und vollständige Position.");
+                }
             Validation.Library(doc);
             return doc;
         }
@@ -135,6 +166,7 @@ public static class RouteJson
 
 public sealed class LocalStore(string directory)
 {
+    public string DirectoryPath { get; } = Path.GetFullPath(directory);
     public string LibraryPath { get; } = Path.Combine(Path.GetFullPath(directory), "library.json");
     public LibraryDocument Load() => File.Exists(LibraryPath)
         ? RouteJson.Parse(RouteJson.ReadBounded(LibraryPath)) : new();

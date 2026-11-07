@@ -7,7 +7,7 @@ public sealed record RoutePlan
 {
     public Guid Id { get; init; } = Guid.NewGuid();
     public string Name { get; set; } = "Neue Route";
-    public string MapVersion { get; init; } = DemoData.MapVersion;
+    public string MapVersion { get; init; } = MapSpace.WorkspaceId;
     public double Radius { get; set; } = 110;
     public RadiusMode RadiusMode { get; set; }
     public List<MapPoint> Points { get; init; } = [];
@@ -19,30 +19,31 @@ public sealed record RoutePlan
     };
 }
 
-public sealed record SpawnPoint(string Id, MapPoint Position);
-public sealed record DemoSummary(Guid Id, Guid RouteId, string RouteName, string MapVersion,
-    DateTimeOffset StartedAt, int DurationSeconds, double Distance, int SimulatedStops);
+public sealed record SpawnPoint(string Id, MapPoint Position, bool ManuallyConfirmed = false, string? Source = null);
+public sealed record RouteActivity(Guid Id, Guid RouteId, string RouteName, string MapVersion,
+    DateTimeOffset StartedAt, int DurationSeconds, double PlannedDistance, int VisitedPoints, int TotalPoints, bool Completed);
+
+public sealed record MapAsset
+{
+    public string Id { get; init; } = MapSpace.WorkspaceId;
+    public string Name { get; init; } = "Freie Arbeitsfläche";
+    public string Source { get; init; } = "Eigene Einträge";
+    public List<SpawnPoint> Spawns { get; init; } = [];
+    [System.Text.Json.Serialization.JsonIgnore]
+    public bool HasImage => Id != MapSpace.WorkspaceId;
+}
 
 public sealed record LibraryDocument
 {
-    public int SchemaVersion { get; init; } = 2;
+    public int SchemaVersion { get; init; } = 3;
     public List<RoutePlan> Routes { get; init; } = [];
-    public List<DemoSummary> DemoHistory { get; init; } = [];
+    public List<MapAsset> Maps { get; init; } = [];
+    public List<RouteActivity> Activities { get; init; } = [];
 }
 
-public static class DemoData
+public static class MapSpace
 {
-    public const string MapVersion = "DEMO-NEUTRAL-2026-01";
+    public const string WorkspaceId = "WORKSPACE-3000-V1";
     public const double MapSize = 3000;
-    // Integer arithmetic makes this fixture identical across runtimes.
-    public static IReadOnlyList<SpawnPoint> Spawns { get; } = Enumerable.Range(0, 600)
-        .Select(i => new SpawnPoint($"D{i:000}", new MapPoint(
-            100 + (i * 947 + 73) % 2800, 100 + (i * 613 + 181) % 2800))).ToArray();
-
-    public static RoutePlan Example() => new()
-    {
-        Name = "Nordpfad · Demo",
-        Points = [new(600, 2400), new(900, 1900), new(1450, 1600), new(1700, 950), new(2400, 650)]
-    };
-    public static bool IsCurrent(RoutePlan route) => route.MapVersion == MapVersion;
+    public static bool IsLegacyExample(RoutePlan route) => route.MapVersion.StartsWith("DEMO-", StringComparison.Ordinal);
 }

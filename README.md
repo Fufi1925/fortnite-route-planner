@@ -1,46 +1,50 @@
-# Fortnite Route Planner · Routenatelier
+# Fortnite Route Planner
 
-Windows-Desktop-App zum **offline** Planen von Routen mit Quellcode unter MIT-Lizenz. Version 0.1.0 verwendet ausschließlich eine neutrale Beispielkarte und 600 generierte mögliche Spawnpunkte. **Keine Fortnite-Verbindung, keine echten Fortnite-Kartendaten, keine Live-Erkennung und keine Freigabe für den Einsatz mit Fortnite.**
+Ein lokaler Windows-Routenplaner mit einer durchgehend schwarzen und grauen Oberfläche. **Kein Login, keine Simulation, keine automatisch erzeugten Orte und keine erfundenen Spielstatistiken.** Du arbeitest mit deinen eigenen Routen, Kartenbildern und Daten.
+
+[Windows-Download](https://github.com/Fufi1925/fortnite-route-planner/releases) · [Build und Tests](https://github.com/Fufi1925/fortnite-route-planner/actions) · [Designentscheidungen](docs/DESIGN.md)
 
 ## Starten
 
-Öffentliches Repository: [Fufi1925/fortnite-route-planner](https://github.com/Fufi1925/fortnite-route-planner). Windows-Builds entstehen unter [GitHub Actions](https://github.com/Fufi1925/fortnite-route-planner/actions): **Windows build and offline checks → erfolgreicher Lauf → Artifacts → Routenatelier-win-x64**. Die Verfügbarkeit hängt vom erfolgreichen CI-Lauf ab. Quellcode und Buildskripte sind vollständig enthalten; generierte EXE-/ZIP-Dateien werden als CI-Artefakte ausgeliefert.
+Unter **Releases** das Paket `Routenatelier-win-x64.zip` herunterladen, entpacken und `RoutePlanner.exe` starten. Alternativ ist die EXE einzeln verfügbar; Lizenzhinweise gehören zur Auslieferung. Eine separate .NET-Installation und ein Benutzerkonto sind nicht erforderlich. Der Build ist unsigniert.
 
-Das selbst gebaute Paket liegt unter `artifacts/Routenatelier-win-x64.zip`. Entpacken und `RoutePlanner.exe` als normaler Benutzer starten. Die Anwendung ist selbstenthaltend; eine separate .NET-Installation ist nicht nötig. Windows x64 erforderlich. Das Paket ist nicht signiert. Der ursprüngliche lokale Build wurde unter Linux für Windows kompiliert; dessen Windows-Ausführung wurde nicht geprüft. Sicherheitsfunktionen von Windows nicht abschalten.
+## Was funktioniert
 
-Einrichten aus Quellcode: [.NET SDK 10.0.403](https://dotnet.microsoft.com/download/dotnet/10.0) installieren und unter Windows im Projektordner ausführen:
+- Neue Routen anlegen, benennen, speichern, laden, duplizieren und löschen.
+- Wegpunkte per Klick oder Koordinateneingabe setzen, verschieben, umsortieren und entfernen.
+- Zoomen, verschieben und den Ausschnitt einpassen.
+- Eigene oder berechtigt nutzbare **quadratische PNG-/JPEG-Karten** öffnen. Das Kartenbild wird lokal gespeichert und für die monochrome Darstellung in Graustufen umgewandelt.
+- Eigene Orte setzen und dauerhaft speichern; statische Ortsdaten mit passender Kartenkennung importieren.
+- Orte nach ihrem Abstand zur Strecke oder zu Wegpunkten filtern. „Alle Orte zeigen“ ist ein ausdrücklich sichtbarer Bearbeitungsmodus ohne Radiusausblendung.
+- Routen als JSON exportieren und importieren. Zum Übertragen einer bildgebundenen Route auch das zugehörige Kartenbild mitnehmen.
+- Eine Route im normalen Kompaktfenster abarbeiten: **Wegpunkt erreicht** bestätigt jeden Fortschritt bewusst manuell. Der Verlauf speichert tatsächlich vergangene Zeit und manuelle Bestätigungen. Die Distanz ist die **geplante** Streckenlänge, keine gemessene Spielerbewegung.
+- Ohne Netzverbindung arbeiten und lokale Daten gezielt löschen.
+
+Die App startet mit einer leeren Arbeitsfläche. Es gibt keine eingebauten fiktiven Inseln, Test-Truhen, Fake-Matches oder voreingestellten Routen. Für die Arbeitsfläche gelten normierte Koordinaten von 0 bis 3000 KE je Achse; 1 % Kartenbreite entspricht 30 KE. **KE sind keine bestätigten Fortnite-Meter.**
+
+## Zu Fortnite und echten Daten
+
+Dies ist eine funktionierende lokale Planungsanwendung. Es gibt **keine Fortnite-Verbindung, automatische Spielerortung, Truhen-Erkennung oder zugelassene Live-Schnittstelle**. Eine offizielle aktuelle Fortnite-Karte beziehungsweise ein lizenzierter Spawn-Datensatz ist nicht enthalten. Deine importierten statischen Orte sind kein Nachweis dafür, dass in einer aktuellen Partie dort eine Truhe existiert.
+
+Nur Bilder und Daten öffnen, die du verwenden darfst. Die App prüft Dateiformat, Integrität und Kartenkennung; sie kann keine Nutzungsrechte für eine fremde Datei erteilen. Der Einsatz zusammen mit Fortnite ist weiterhin nicht pauschal freigegeben. Details: [Compliance und Quellen](docs/COMPLIANCE_AND_SOURCES.md).
+
+## Dateien und Grenzen
+
+Speicherort: `%LOCALAPPDATA%\Routenatelier\library.json`; importierte Karten liegen im dortigen Unterordner `maps`. Keine Telemetrie, Werbung oder Cloudübertragung. Maximal 200 Routen, 500 Punkte pro Route, 100 Karten, 10.000 Orte pro Karte und 200 Verlaufseinträge. JSON maximal 2 MiB, Bildimport maximal 20 MiB, quadratische Bilder mit 64–16.000 Pixeln; für die lokale Darstellung auf maximal 2048 Pixel normalisiert.
+
+Schema 1/2 wird nach Schema 3 migriert. Eigene alte Routen bleiben erhalten; historische Beispieldaten werden nicht als aktuelle Nutzerdaten angezeigt und simulierte Verlaufswerte werden nicht in den echten Verlauf übernommen. Eine Instanz pro Benutzer vorgesehen. Zum Deinstallieren App-Verzeichnis und bei Bedarf das benutzerbezogene Datenverzeichnis entfernen; exportierte Dateien separat löschen.
+
+## Entwickeln
+
+.NET SDK 10.0.403 unter Windows installieren und im Projektordner ausführen:
 
 ```powershell
 dotnet run --project src/RoutePlanner.App -c Release
-```
-
-## Bedienung
-
-1. Die mitgelieferte Demo-Route erkunden oder **Neu** wählen. Linksklick auf die Karte setzt einen Wegpunkt; vorhandene Punkte lassen sich ziehen.
-2. Rechte oder mittlere Maustaste zum Verschieben, Mausrad zum Zoomen. **Einpassen** setzt den Ausschnitt zurück.
-3. Wegpunkte in der Liste auswählen, umsortieren, entfernen oder X/Y bearbeiten. Der weiße erste Punkt ist der Start; der letzte trägt eine Zielfahne.
-4. Radius und Modus einstellen: Abstand zur gesamten Strecke oder Abstand zu einzelnen Wegpunkten. Die alternative Anzeige in Prozent bezeichnet den Anteil an der Kartenbreite; sie verändert die zugrunde liegenden Karteneinheiten nicht.
-5. Offene Kreise sind **mögliche Demo-Spawns**, keine bestätigten Truhen. Ein Klick auf einen sichtbaren Spawn setzt eine **manuelle Demo-Bestätigung** (Quadrat). Sie gilt nur in dieser Sitzung und wird bei Routenwechsel/Demo-Neustart verworfen. Keine Behauptung über eine echte Partie.
-6. Namen vergeben und **Speichern**. **Laden** liest die lokale Bibliothek erneut. **Duplizieren**, **Löschen**, **Import** und **Export** stehen links bereit. Routenwechsel und Schließen fragen bei ungespeicherten Änderungen nach.
-7. **Demo abspielen** führt deterministische Testereignisse im Zeitraffer aus. Die simulierten Sekunden sind keine gemessene Spielzeit. Die Zusammenfassung wird lokal gespeichert.
-8. **Kompaktansicht** öffnet ein gewöhnliches, skalierbares Fenster oben rechts auf dem primären Bildschirm. Per Titelleiste verschieben, auch auf andere Monitore. „Immer oben“ ist standardmäßig aus und nur für Tests über neutralen Anwendungen vorgesehen. **Zur Planung** oder das Schließen des Kompaktfensters bringt den Planer zurück.
-
-## Daten und Grenzen
-
-- Speicherung: `%LOCALAPPDATA%\Routenatelier\library.json`; maximal 200 Routen und die letzten 200 Demo-Zusammenfassungen. Kein Server, keine Telemetrie, keine Werbung.
-- Pro Route maximal 500 Punkte, Radius 0–1500 KE; JSON maximal 2 MiB. Import führt keine Inhalte aus. Unbekannte Kartenversionen bleiben exportierbar, erhalten aber keine Darstellung auf der Demo-Karte, Spawnfilter oder Demo-Simulation.
-- **Lokale Daten löschen** entfernt Bibliothek und Verlauf nach Rückfrage. Exporte separat löschen. Deinstallation: App-Verzeichnis entfernen und bei Bedarf das obige Datenverzeichnis löschen. Keine Dienste, Treiber, Registry-Einträge oder Autostarts.
-- Kein Click-through, kein globaler Hotkey, kein Screenshot/OCR, kein freigegebener Live-Adapter. Kein offizielles Epic-, Overwolf- oder Tracker-Produkt.
-- Windows 10/11, mehrere Monitore, reale Mausinteraktionen und Skalierungen sind noch praktisch abzunehmen. Primäre Arbeitsfläche für Erstplatzierung; kein Speichern der Fensterposition.
-
-## Entwicklung und Nachweise
-
-```powershell
 dotnet run --project tests/RoutePlanner.Tests -c Release
-dotnet run --project tests/RoutePlanner.UiSmoke -c Release  # nur Windows
+dotnet run --project tests/RoutePlanner.UiSmoke -c Release
 ./scripts/publish.ps1
 ```
 
-Die Tests sind eigenständige Programme ohne Testpakete; **`dotnet test` führt diese Tests nicht aus**. Rückgabecode 0 bedeutet Erfolg. Der Windows-Smoke-Test öffnet nur die eigene App mit isoliertem temporärem Datenordner.
+Die Testprogramme liefern Exitcodes; `dotnet test` führt sie nicht aus. Der Windows-Test arbeitet mit isolierten temporären Dateien und erstellt echte Screenshots der WPF-Oberfläche. Die dort erzeugten Testeingaben werden nicht mit der Anwendung ausgeliefert.
 
-Weitere Unterlagen: [Quellen und Compliance](docs/COMPLIANCE_AND_SOURCES.md), [Architektur](docs/ARCHITECTURE.md), [Testbericht](docs/TEST_REPORT.md), [Build und Auslieferung](docs/RELEASE_BUILD.md), [Abhängigkeiten](docs/DEPENDENCIES.md). Den aktuellen CI-Status und die Download-Artefakte zeigt [GitHub Actions](https://github.com/Fufi1925/fortnite-route-planner/actions).
+Weitere Unterlagen: [Architektur](docs/ARCHITECTURE.md), [Prüfstand](docs/TEST_REPORT.md), [Windows-Build](docs/RELEASE_BUILD.md), [Abhängigkeiten](docs/DEPENDENCIES.md).

@@ -1,37 +1,33 @@
-# Architektur
+# Architektur 0.2
 
-## Schichten
+## Komponenten
 
-`src/RoutePlanner.Core` ist eine plattformneutrale .NET-10-Bibliothek. Sie enthält typisierte Kartenpunkte, Routen, Spawnindex, Validierung, JSON-/Dateispeicherung und Demo-Provider. Keine UI-, Netzwerk- oder Prozessschnittstellen.
+`RoutePlanner.Core`: typisierte Routen, Kartendefinitionen und Orte, reine Geometrie, räumlicher Spawnindex, JSON-Validierung, atomare Dateispeicherung und `ManualRouteSession`. Keine UI-, Netzwerk- oder Spielprozessabhängigkeit. Der frühere Demo-Provider ist entfernt.
 
-`src/RoutePlanner.App` ist WPF, ohne Drittanbieter-Pakete. `MainWindow` koordiniert Bearbeitung, Dateidialoge und Demo-Timer. `MapView` zeichnet eine neutrale Vektorkarte per `DrawingContext`; dieselbe Komponente wird im `CompactWindow` schreibgeschützt verwendet. Normale Fensterrahmen liefern Verschieben/Skalieren. Der Datenordner ist im Konstruktor für den UI-Test isolierbar, nicht über unvalidierte importierte Pfade steuerbar.
+`RoutePlanner.App`: WPF ohne Drittanbieter-Pakete. `MainWindow` verwaltet die Planung; `MapView` zeichnet freie Arbeitsfläche beziehungsweise eigenes Kartenbild und Routen. `MapImages` validiert und normalisiert lokale Bilder. `CompactWindow` zeigt die Route und registriert ausschließlich bewusste manuelle Bestätigungen. `Dialogs` liefert dunkle eigene Bestätigungen. Gewöhnliches WindowChrome, keine Spiel-Hooks. `App.OpenPlannerOnStartup` erlaubt den isolierten UI-Test ohne zweite Anwendungsinstanz.
 
-`tests/RoutePlanner.Tests` ist ein ausführbarer, plattformneutraler Testläufer mit Exitcode. `tests/RoutePlanner.UiSmoke` öffnet echte WPF-Fenster unter Windows, ruft reguläre eigene Button-Handler auf, prüft Speicherung/Filter/Demo/Kompakt und erzeugt Screenshots. Kein Test startet oder sucht Fortnite.
+## Koordinaten und Datenherkunft
 
-## Koordinaten und Filter
+Ursprung oben links, X nach rechts, Y nach unten; beide Achsen einschließlich 0 bis 3000 KE. KE sind ein normiertes lokales System und keine Zusage einer Fortnite-Georeferenzierung oder Meterumrechnung. Nur quadratische Kartenbilder verhindern eine unterschiedliche Achsenskalierung. Prozentanzeige = Radius / 3000 × 100.
 
-Planare Karte mit Ursprung oben links, X nach rechts, Y nach unten; beide Achsen einschließlich 0 bis 3000. **KE sind synthetische Karteneinheiten**, keine geografischen Breiten-/Längengrade und keine bestätigten Fortnite-Meter. Prozentanzeige = `Radius / 3000 * 100`. Die euklidische Länge bleibt unabhängig von Zoom/DPI.
+Leere Arbeitsfläche hat Kennung `WORKSPACE-3000-V1`. Importierte Karten werden in Graustufen auf maximal 2048 Pixel normalisiert und als PNG gespeichert. Ihre Kennung ist `MAP-` plus SHA-256 des gespeicherten Inhalts. Die gespeicherte Karte wird beim Laden erneut gegen diesen Hash geprüft. Pfad wird ausschließlich aus validierter Kennung innerhalb des eigenen `maps`-Ordners gebildet; JSON enthält keinen auszuführenden oder frei steuerbaren Dateipfad.
 
-Für Punkt P und Segment A–B: `t = clamp(dot(P-A,B-A)/|B-A|²,0,1)`, nächster Punkt `A+t(B-A)`. Degenerierte Segmente werden als Einzelpunkt behandelt. Der Korridorabstand ist das Minimum über alle Segmente; Wegpunktmodus verwendet das Minimum über alle Punkte. Bei null/leerer Route ist der Abstand unendlich und die Ergebnismenge leer. Radiusgrenze inklusive, mit absoluter Toleranz `1e-7 KE` gegen Gleitkommafehler. Darstellung und Filter verwenden dasselbe Modell; bei Nullradius bleibt nur die Grenze mit dieser Rechentoleranz.
+Jede Route und jeder Ortsdatensatz gehört zu einer Kartenkennung. Eine unbekannte oder fehlende Karte sperrt die Bearbeitung und Darstellung der zugehörigen Route, erhält aber Exportierbarkeit. Keine alternative Karte wird stillschweigend untergelegt. Ortsimporte benötigen dieselbe Kennung und eine Quellenangabe. Importierte Orte werden als statische Daten übernommen, nicht automatisch als eigene Sichtung bestätigt. Eigene manuelle Orte und Quellen sind persistent. Statische Orte sind kein aktueller Spawn-Nachweis.
 
-`SpawnIndex` gruppiert Punkte in 150-KE-Zellen. Segment-/Wegpunkt-Bounding-Boxes werden um den Radius erweitert; anschließend erfolgt die genaue Distanzprüfung aller Kandidaten, ohne Ausdünnung. Tests vergleichen beide Modi bei zufälligen Routen mit vollständiger Suche. Wegen maximal 500 Routenpunkten und einem endlichen 21×21-Zellbereich ist die Verarbeitung begrenzt; der 100.000-Punkte-Test ist keine Garantie für alle Worst-Case-Routen. Standarddaten: nur 600 Punkte.
+## Geometrie
 
-Ansichtstransformation: `screen = world * scale + offset`; `scale = min(width,height)/3240 * zoom`. Der Zoom ist auf 0,6–8 begrenzt. Mausradzoom hält die Weltposition unter dem Cursor fest. Panning ändert nur den Viewport. Dragging begrenzt Wegpunkte auf die Kartengrenzen. Zeichnung wird auf Karte und Control begrenzt. Bei fremder Kartenversion werden keine Route/Spawns auf die Demo-Geometrie gezeichnet.
+Für Punkt P und Segment A–B: t = clamp(dot(P−A,B−A)/|B−A|²,0,1), Abstand zum Punkt A+t(B−A). Nullsegment wird als Einzelpunkt behandelt. Korridor verwendet das Minimum über Segmente; Wegpunktmodus das Minimum über Punkte. Leere Route hat Abstand unendlich. Grenze inklusive mit 1e-7 KE Rechentoleranz. Indexzellen 150 KE; erweiterte Segment-Bounding-Boxes reduzieren Kandidaten, dann exakte Prüfung. Ergebnisse werden gegen vollständige Suche getestet.
 
-## Speicherung und Integrität
+Bildschirm = Welt × Maßstab + Offset; Maßstab min(Breite,Höhe)/3240 × Zoom. Zoom 0,6–8; Cursorposition bleibt beim Mausradzoom stabil. Route und Radien bleiben in Weltkoordinaten. Bilder erscheinen ausschließlich in Graustufen mit 32 % Deckkraft.
 
-Pfad: `%LOCALAPPDATA%\Routenatelier\library.json`, Schema 2. Schema 1 (Routen mit denselben Pflichtfeldern, ohne zwingenden Verlauf) wird explizit auf Schema 2 migriert. Unbekannte Schemata werden abgelehnt. Karten-Datenversion und Dateischema sind getrennte Begriffe.
+## Speicherung und Migration
 
-Dateien werden bis maximal 2 MiB gelesen, JSON-Tiefe maximal 20, unbekannte Felder/doppelte Schlüssel/fehlende Routenfelder oder Koordinaten verworfen. Zahlen müssen endlich sein; Limits: 200 Routen, 500 Punkte/Route, Namen 120 Zeichen ohne Steuerzeichen. Import enthält genau eine Route und keinen Verlauf, erhält eine neue lokale ID und führt keinen Inhalt aus. Exporte enthalten nur die gewählte Route. Pfade kommen aus eigenem festem Speicherpfad oder bewusst bedienten OS-Dateidialogen, niemals aus dem JSON.
+Schema 3 enthält `routes`, `maps` und `activities`. Maximal 2 MiB JSON, Tiefe 20, doppelte Schlüssel und fremde Felder abgelehnt. Identität, Kartenkennung, endliche Koordinaten und Datenmengen validiert. Schreiben über temporäre Datei im selben Ordner, Datenträger-Flush und Ersetzen; kein Schutzversprechen gegen jeden Hardwareausfall. Beschädigte Startbibliothek bleibt vor automatischem Überschreiben gesperrt.
 
-Speichern validiert zuerst, schreibt eine temporäre Datei im selben Verzeichnis, flush-t auf den Datenträger und ersetzt die Zieldatei per `File.Move(overwrite:true)`. Das verhindert gewöhnliche Teil-Schreibdateien; keine Zusage gegen jedes Dateisystem-/Stromausfallszenario, keine verschlüsselte Speicherung und keine automatische Backup-Rotation. Fehler werden in deutscher UI angezeigt. Bei beschädigter Startbibliothek bleibt Speichern gesperrt, bis die Datei bewusst entfernt oder erfolgreich erneut geladen wurde. Löschfunktion entfernt exakt die Bibliothek, kein rekursives Verzeichnis. Die App ist für einen laufenden Prozess pro Benutzer gedacht; gleichzeitige Instanzen besitzen keine Konfliktsynchronisation.
+Schema 1/2: Routen bleiben erhalten, simuliertes `demoHistory` wird nicht als echter Verlauf migriert. Historische Beispielrouten bleiben gespeichert, werden aber nicht automatisch angezeigt oder gestartet. Sichern geschieht erst bei bewusster Speicheraktion; vorher bleibt die alte Datei erhalten. Bilder sind separate lokale Dateien. Kein automatisches Backup und keine Konfliktauflösung zwischen mehreren Instanzen.
 
-## Demo und Datenherkunft
+## Tatsächliche manuelle Routengänge
 
-`IOfflineEventProvider` liefert ausschließlich `OfflineDemoProvider`: deterministische `Started`, `Position`, `Finished`-Ereignisse. Der UI-Timer spielt alle 700 ms ein Ereignis ab; Ereigniszeit 30 Sekunden pro Wegpunkt plus 10 Sekunden Abschluss ist eine Testzeit. `DemoSession` prüft Reihenfolge/Zeit/Koordinaten, arbeitet auf einer Routenkopie und erstellt eine als Demo benannte Zusammenfassung. Keine Eliminierungen, echten Match-IDs oder erfundenen Fortnite-Live-Werte.
+`ManualRouteSession` erstellt eine Routenkopie und misst die vergangene Uhrzeit. Ein Wegpunkt wird ausschließlich durch die Aktion „Wegpunkt erreicht“ bestätigt. Kein Timer erzeugt Positionen oder Fortschritte. Gespeichert werden Anfangszeit, tatsächliche Dauer (begrenzt auf 24 Stunden), bestätigte/gesamte Wegpunkte, Abschlussstatus und ausdrücklich **geplante** Streckenlänge. Diese Länge behauptet keine gemessene Spielerbewegung. Abbrüche bleiben als beendet markiert. Bei Schreibfehler bleibt der noch ungespeicherte Verlauf im Speicher für einen erneuten Speicherversuch.
 
-Ein `ApprovedLiveProvider` ist absichtlich **nicht vorhanden**; kein inaktiver Netzwerkcode oder spekulativer Anschluss. Ein zukünftiger Live-Vertrag benötigt zunächst eine positive Compliance-Entscheidung und eine gesonderte Daten-/Statussemantik. Fehlende API ist hier kein Fehlerzustand: es gibt ausschließlich Offlinebetrieb. Manuelle Spawn-Bestätigungen sind flüchtige UI-Sitzungsdaten und werden nicht zu Match-Statistiken umgedeutet.
-
-## Fenster und Betrieb
-
-WPF-Manifest: normaler Benutzer, `PerMonitorV2`, kein `uiAccess`. Initiale Kompaktplatzierung nutzt die primäre Windows-Arbeitsfläche in DIP. Andere Monitore sind über normalen Fensterzug möglich; „Oben rechts“ setzt auf den primären Monitor zurück. Keine gespeicherten offscreen Positionen. Standardmäßig kein Topmost, keine globale Tastaturregistrierung, kein Click-through und kein Eingabeeingriff. DPI-Verhalten und besondere Arbeitsflächen benötigen weiterhin reale Windows-Abnahme.
+Keine Live-API, automatische Truhensuche, Bildschirmaufnahme/OCR oder Spielsteuerung. Der UI-Timer aktualisiert ausschließlich die Anzeige der tatsächlichen vergangenen Zeit.

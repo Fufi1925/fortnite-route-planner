@@ -23,7 +23,7 @@ jobs:
           New-Item artifacts -ItemType Directory -Force | Out-Null
           dotnet run --project tests/RoutePlanner.Tests -c Release 2>&1 | Tee-Object artifacts/core-tests.txt
           if ($LASTEXITCODE -ne 0) { throw 'Core tests failed' }
-      - name: WPF smoke on isolated demo data
+      - name: Windows UI and local-data verification
         shell: pwsh
         run: |
           dotnet run --project tests/RoutePlanner.UiSmoke -c Release 2>&1 | Tee-Object artifacts/ui-smoke.txt

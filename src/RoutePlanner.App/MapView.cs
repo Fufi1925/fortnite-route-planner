@@ -12,12 +12,16 @@ public sealed class MapView : FrameworkElement
     public RoutePlan? Route { get; set; }
     public IReadOnlyList<SpawnPoint> VisibleSpawns { get; set; } = [];
     public HashSet<string> Confirmed { get; set; } = [];
-    public MapPoint? DemoPosition { get; set; }
+    public ImageSource? MapImage { get; set; }
+    public string ActiveMapVersion { get; set; } = MapSpace.WorkspaceId;
+    public bool PlaceMarkers { get; set; }
+    public int VisitedPoints { get; set; }
     public bool Editable { get; set; } = true;
     public int SelectedPoint { get; set; } = -1;
     public event Action? RouteEdited;
     public event Action<int>? PointSelected;
     public event Action<string>? SpawnClicked;
+    public event Action<MapPoint>? MarkerRequested;
     private double zoom = 1;
     private Vector pan;
     private Point start, last;
@@ -33,9 +37,8 @@ public sealed class MapView : FrameworkElement
         var brush = (SolidColorBrush)new BrushConverter().ConvertFromString(color)!;
         brush.Freeze(); return brush;
     }
-    private static readonly Brush Water = Brush("#141C24"), Land = Brush("#293239"),
-        Highland = Brush("#323D42"), Grid = Brush("#39444B"), White = Brush("#F3F5F6"),
-        Muted = Brush("#A3ADB5"), Corridor = Brush("#286E7B87"), Manual = Brush("#D2DBE0");
+    private static readonly Brush Water = Brush("#0A0A0A"), Grid = Brush("#202020"), White = Brush("#E6E6E6"),
+        Muted = Brush("#858585"), Corridor = Brush("#18FFFFFF"), Manual = Brush("#BDBDBD");
     public MapView()
     {
         Focusable = true; ClipToBounds = true; Cursor = Cursors.Cross;
@@ -49,26 +52,23 @@ public sealed class MapView : FrameworkElement
     protected override void OnRender(DrawingContext dc)
     {
         base.OnRender(dc);
-        dc.DrawRectangle(Brush("#10171D"), null, new Rect(RenderSize));
+        dc.DrawRectangle(Brush("#0A0A0A"), null, new Rect(RenderSize));
         double s = Scale;
         dc.PushTransform(new MatrixTransform(s, 0, 0, s, Offset.X, Offset.Y));
         dc.PushClip(new RectangleGeometry(new Rect(0, 0, 3000, 3000)));
         dc.DrawRectangle(Water, null, new Rect(0, 0, 3000, 3000));
-        Polygon(dc, Land, [new(190, 620), new(600, 200), new(1500, 150), new(2200, 380),
-            new(2750, 850), new(2800, 1800), new(2350, 2650), new(1500, 2810), new(510, 2570), new(220, 1800)]);
-        Polygon(dc, Highland, [new(500, 700), new(1130, 430), new(1730, 620), new(1490, 1240), new(640, 1400)]);
-        Polygon(dc, Highland, [new(1650, 1750), new(2340, 1390), new(2560, 2030), new(2140, 2490), new(1600, 2370)]);
-        dc.DrawEllipse(Water, null, new Point(1800, 1300), 290, 180);
+        if (MapImage is not null)
+        {
+            dc.PushOpacity(.32); dc.DrawImage(MapImage, new Rect(0, 0, 3000, 3000)); dc.Pop();
+        }
         for (int i = 0; i <= 3000; i += 300)
         {
-            dc.DrawLine(new Pen(Grid, .6 / s), new(i, 0), new(i, 3000));
-            dc.DrawLine(new Pen(Grid, .6 / s), new(0, i), new(3000, i));
+            dc.DrawLine(new Pen(Grid, .5 / s), new(i, 0), new(i, 3000));
+            dc.DrawLine(new Pen(Grid, .5 / s), new(0, i), new(3000, i));
         }
-        Text(dc, "N ↑", new(140, 160), 12 / s, Muted);
-        Text(dc, "N O R D F E L D", new(750, 750), 12 / s, Muted);
-        Text(dc, "DEMOSEE", new(1600, 1280), 10 / s, Muted);
-        Text(dc, "S Ü D H A I N", new(1700, 2150), 12 / s, Muted);
-        if (Route is { } route && DemoData.IsCurrent(route))
+        dc.DrawRectangle(null, new Pen(Brush("#303030"), 1/s), new Rect(0,0,3000,3000));
+        Text(dc, "N ↑", new(90, 90), 11 / s, Muted);
+        if (Route is { } route && route.MapVersion == ActiveMapVersion)
         {
             if (route.RadiusMode == RadiusMode.Corridor && route.Points.Count > 1)
             {
@@ -89,16 +89,14 @@ public sealed class MapView : FrameworkElement
             for (int i = 0; i < route.Points.Count; i++)
             {
                 var point = P(route.Points[i]); double r = (i == SelectedPoint ? 12 : 10) / s;
-                dc.DrawEllipse(i == 0 ? White : Water, new Pen(White, (i == SelectedPoint ? 3 : 1.5) / s), point, r, r);
-                Text(dc, (i+1).ToString(CultureInfo.InvariantCulture), new(point.X-4/s, point.Y-8/s), 11/s, i==0 ? Water : White);
+                dc.DrawEllipse(i < VisitedPoints ? Manual : Water, new Pen(White, (i == SelectedPoint ? 3 : 1.5) / s), point, r, r);
+                Text(dc, (i+1).ToString(CultureInfo.InvariantCulture), new(point.X-4/s, point.Y-8/s), 11/s, White);
                 if (i == route.Points.Count-1 && i > 0)
                     dc.DrawRectangle(White, null, new Rect(point.X + 10/s, point.Y - 16/s, 8/s, 5/s));
             }
         }
-        if (DemoPosition is { } player)
-            dc.DrawEllipse(null, new Pen(White, 3 / s), P(player), 19 / s, 19 / s);
         dc.Pop(); dc.Pop();
-        Text(dc, "DEMO · NEUTRALE BEISPIELKARTE", new(16, ActualHeight-30), 11, Muted);
+        Text(dc, "0 — 3000 KE   /   NORMIERTE KOORDINATEN", new(16, ActualHeight-25), 10, Muted);
     }
     private static StreamGeometry Path(IReadOnlyList<MapPoint> points)
     {
@@ -109,13 +107,6 @@ public sealed class MapView : FrameworkElement
             context.PolyLineTo(points.Skip(1).Select(P).ToArray(), true, false);
         }
         geometry.Freeze(); return geometry;
-    }
-    private static void Polygon(DrawingContext dc, Brush fill, Point[] points)
-    {
-        var geometry = new StreamGeometry();
-        using (var context = geometry.Open())
-        { context.BeginFigure(points[0], true, true); context.PolyLineTo(points.Skip(1).ToArray(), true, false); }
-        dc.DrawGeometry(fill, null, geometry);
     }
     private void Text(DrawingContext dc, string value, Point at, double size, Brush brush) => dc.DrawText(
         new FormattedText(value, CultureInfo.GetCultureInfo("de-DE"), FlowDirection.LeftToRight,
@@ -133,8 +124,13 @@ public sealed class MapView : FrameworkElement
         base.OnMouseDown(e); Focus(); start = last = e.GetPosition(this); moved = false;
         if (e.ChangedButton == MouseButton.Right || e.ChangedButton == MouseButton.Middle)
         { panning = true; CaptureMouse(); e.Handled = true; return; }
-        if (e.ChangedButton != MouseButton.Left || !Editable || Route is null || !DemoData.IsCurrent(Route)) return;
+        if (e.ChangedButton != MouseButton.Left || !Editable || Route is null || Route.MapVersion != ActiveMapVersion) return;
         var at = World(start);
+        if (PlaceMarkers)
+        {
+            if (Geometry.IsOnMap(at)) MarkerRequested?.Invoke(at);
+            e.Handled = true; return;
+        }
         draggingPoint = Route.Points.FindIndex(p => Geometry.Distance(p, at) <= 13 / Scale);
         if (draggingPoint >= 0)
         { SelectedPoint = draggingPoint; PointSelected?.Invoke(draggingPoint); }
@@ -163,7 +159,7 @@ public sealed class MapView : FrameworkElement
     protected override void OnMouseUp(MouseButtonEventArgs e)
     {
         base.OnMouseUp(e);
-        if (pendingAdd && !moved && Route is not null && Route.Points.Count < 500)
+        if (e.ChangedButton == MouseButton.Left && pendingAdd && !moved && Route is not null && Route.Points.Count < 500)
         {
             var p = World(e.GetPosition(this));
             if (Geometry.IsOnMap(p))

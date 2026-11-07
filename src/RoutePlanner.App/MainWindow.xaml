@@ -1,84 +1,114 @@
 <Window x:Class="RoutePlanner.App.MainWindow"
- xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
- xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
- xmlns:local="clr-namespace:RoutePlanner.App"
- Style="{StaticResource {x:Type Window}}"
- Title="Routenatelier · Offline-Demo" Width="1260" Height="850" MinWidth="940" MinHeight="520"
- WindowStartupLocation="CenterScreen">
- <Grid Margin="24">
-  <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-  <DockPanel Margin="0,0,0,16">
-   <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-    <Button Content="Demo abspielen" Click="StartDemo" AutomationProperties.AutomationId="StartDemo"/>
-    <Button Content="Kompaktansicht ↗" Click="OpenCompact" AutomationProperties.AutomationId="OpenCompact"/>
-   </StackPanel>
-   <StackPanel><TextBlock Text="ROUTENATELIER" FontSize="24" FontWeight="SemiBold"/>
-    <TextBlock Text="Eigene Wege. In Ruhe geplant." Foreground="#A3ADB5" Margin="0,4,0,0"/></StackPanel>
-  </DockPanel>
-  <Border Grid.Row="1" Background="#252C34" BorderBrush="#485360" BorderThickness="1" Padding="12" Margin="0,0,0,16">
-   <StackPanel><TextBlock Text="OFFLINE / DEMO — Keine Fortnite-Verbindung. Keine Live-Erkennung." FontWeight="SemiBold"/>
-    <TextBlock Text="Nur neutrale Testdaten. Kompaktfenster nur über neutralen Anwendungen prüfen; keine Freigabe für den Einsatz mit Fortnite." TextWrapping="Wrap" Foreground="#BDC5CD" Margin="0,4,0,0"/>
-   </StackPanel>
-  </Border>
-  <Grid Grid.Row="2">
-   <Grid.ColumnDefinitions><ColumnDefinition Width="290"/><ColumnDefinition Width="16"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-   <Border Background="{StaticResource PanelBrush}" Padding="16">
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
-     <StackPanel>
-      <TextBlock Text="MEINE ROUTEN" FontWeight="SemiBold" Foreground="#A3ADB5"/>
-      <ComboBox x:Name="RoutesBox" DisplayMemberPath="Name" SelectionChanged="SelectRoute" AutomationProperties.AutomationId="Routes"/>
-      <WrapPanel><Button Content="Neu" Click="NewRoute"/><Button Content="Duplizieren" Click="DuplicateRoute"/><Button Content="Löschen" Click="DeleteRoute"/></WrapPanel>
-      <TextBox x:Name="NameBox" MaxLength="120" TextChanged="RenameRoute" AutomationProperties.AutomationId="RouteName"/>
-      <WrapPanel><Button Content="Speichern" Click="SaveRoute" AutomationProperties.AutomationId="SaveRoute"/>
-       <Button Content="Laden" Click="ReloadRoute"/><Button Content="Import" Click="ImportRoute"/><Button Content="Export" Click="ExportRoute"/></WrapPanel>
-      <Separator Margin="0,8,0,16"/>
-      <TextBlock Text="SUCHRADIUS" FontWeight="SemiBold" Foreground="#A3ADB5"/>
-      <TextBlock x:Name="RadiusLabel" Margin="0,8,0,0"/>
-      <Slider x:Name="RadiusSlider" Minimum="0" Maximum="1500" TickFrequency="10" ValueChanged="ChangeRadius" AutomationProperties.Name="Suchradius"/>
-      <ComboBox x:Name="UnitsBox" SelectedIndex="0" SelectionChanged="ChangeUnits">
-       <ComboBoxItem Content="Karteneinheiten (KE)"/><ComboBoxItem Content="Prozent der Kartenbreite"/>
-      </ComboBox>
-      <ComboBox x:Name="ModeBox" SelectedIndex="0" SelectionChanged="ChangeMode">
-       <ComboBoxItem Content="Korridor entlang der Strecke"/><ComboBoxItem Content="Kreise um Wegpunkte"/>
-      </ComboBox>
-      <TextBlock Text="Planare Demo-Karte: 0…3000 KE je Achse. Keine Umrechnung in reale Meter." TextWrapping="Wrap" Foreground="#A3ADB5" FontSize="11"/>
-      <TextBlock Text="WEGPUNKTE" FontWeight="SemiBold" Foreground="#A3ADB5" Margin="0,22,0,8"/>
-      <ListBox x:Name="PointsBox" Height="150" SelectionChanged="SelectPoint" AutomationProperties.AutomationId="Waypoints"/>
-      <WrapPanel Margin="0,8,0,0"><Button Content="↑" Click="MoveUp" AutomationProperties.Name="Wegpunkt nach oben"/>
-       <Button Content="↓" Click="MoveDown" AutomationProperties.Name="Wegpunkt nach unten"/><Button Content="Entfernen" Click="RemovePoint"/></WrapPanel>
-      <Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
-       <TextBox x:Name="PointX" ToolTip="X in KE" AutomationProperties.Name="Wegpunkt X" Margin="0,0,4,8"/>
-       <TextBox x:Name="PointY" Grid.Column="1" ToolTip="Y in KE" AutomationProperties.Name="Wegpunkt Y" Margin="4,0,0,8"/>
-      </Grid>
-      <Button Content="Koordinaten übernehmen" Click="SetPoint"/>
-      <Button Content="Lokale Daten löschen …" Click="ClearData" Margin="0,20,0,0"/>
+ xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+ xmlns:local="clr-namespace:RoutePlanner.App" xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+ Style="{StaticResource {x:Type Window}}" Title="Route Planner · Lokal" Width="1440" Height="920" MinWidth="980" MinHeight="660" WindowStartupLocation="CenterScreen">
+ <Border BorderBrush="#292929" BorderThickness="1" Background="#080808">
+  <Grid>
+   <Grid.RowDefinitions><RowDefinition Height="46"/><RowDefinition Height="88"/><RowDefinition Height="*"/><RowDefinition Height="34"/></Grid.RowDefinitions>
+   <Border BorderBrush="#202020" BorderThickness="0,0,0,1" Padding="20,0,8,0">
+    <DockPanel LastChildFill="True">
+     <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" shell:WindowChrome.IsHitTestVisibleInChrome="True">
+      <Button Content="−" Width="38" Style="{StaticResource QuietButton}" Click="MinimizeWindow" AutomationProperties.Name="Minimieren"/>
+      <Button Content="□" Width="38" Style="{StaticResource QuietButton}" Click="MaximizeWindow" AutomationProperties.Name="Maximieren"/>
+      <Button Content="×" Width="38" Style="{StaticResource QuietButton}" Click="CloseWindow" AutomationProperties.Name="Schließen"/>
      </StackPanel>
-    </ScrollViewer>
-   </Border>
-   <Grid Grid.Column="2">
-    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="150"/></Grid.RowDefinitions>
-    <DockPanel Margin="0,0,0,8">
-     <WrapPanel DockPanel.Dock="Right"><Button Content="−" Click="ZoomOut" AutomationProperties.Name="Verkleinern"/><Button Content="+" Click="ZoomIn" AutomationProperties.Name="Vergrößern"/><Button Content="Einpassen" Click="FitMap"/></WrapPanel>
-     <StackPanel><TextBlock x:Name="MapVersionLabel" FontWeight="SemiBold"/>
-      <TextBlock x:Name="RouteMetrics" Foreground="#A3ADB5" Margin="0,4,0,0"/></StackPanel>
+     <StackPanel Orientation="Horizontal" VerticalAlignment="Center"><TextBlock Text="╱╱" FontSize="18" Foreground="#DDDDDD" Margin="0,0,10,0"/><TextBlock Text="ROUTE PLANNER" FontSize="11" FontWeight="SemiBold" Foreground="#9C9C9C" VerticalAlignment="Center"/></StackPanel>
     </DockPanel>
-    <Border Grid.Row="1" BorderThickness="1" BorderBrush="#3C454F">
-     <local:MapView x:Name="PlannerMap" AutomationProperties.AutomationId="PlannerMap" AutomationProperties.Name="Demo-Karte, Linksklick setzt Wegpunkt"/>
-    </Border>
-    <StackPanel Grid.Row="2" Margin="0,10,0,12">
-     <TextBlock Text="○ Möglicher Spawn (DEMO)     □ Manuell bestätigt (Demo-Sichtung, diese Sitzung)     ① Start · ② Wegpunkt · ⚑ Ziel" TextWrapping="Wrap" FontSize="11"/>
-     <TextBlock Text="Klick: Punkt setzen / Spawn markieren · Punkt ziehen: bearbeiten · Rechts ziehen: verschieben · Mausrad: zoomen" Foreground="#A3ADB5" FontSize="11" Margin="0,5,0,0" TextWrapping="Wrap"/>
+   </Border>
+   <Grid Grid.Row="1" Margin="24,0">
+    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+    <StackPanel VerticalAlignment="Center"><TextBlock Text="Deine Route. Dein Plan." FontSize="25" FontWeight="SemiBold" Foreground="#EEEEEE"/><TextBlock Text="Planen, speichern und Schritt für Schritt loslegen." Foreground="#858585" Margin="0,5,0,0"/></StackPanel>
+    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+     <Button Content="Karte öffnen" Click="OpenMap" Margin="0,0,8,0" AutomationProperties.AutomationId="OpenMap"/>
+     <Button Content="Kompakt" Click="OpenCompact" Margin="0,0,8,0" AutomationProperties.AutomationId="OpenCompact"/>
+     <Button x:Name="StartRouteButton" Content="Route starten  →" Click="StartRoute" Style="{StaticResource PrimaryButton}" AutomationProperties.AutomationId="StartRoute"/>
     </StackPanel>
-    <Border Grid.Row="3" Background="{StaticResource PanelBrush}" Padding="12">
-     <DockPanel><Button DockPanel.Dock="Right" Content="Demo stoppen" Click="StopDemo" VerticalAlignment="Top"/>
-      <StackPanel><TextBlock Text="DEMO-RUNDEN · LOKALER VERLAUF" FontWeight="SemiBold" Foreground="#A3ADB5"/>
-       <TextBlock x:Name="ProviderStatus" Margin="0,5,0,8" TextWrapping="Wrap"/>
-       <ListBox x:Name="HistoryBox" Height="70" BorderThickness="0" AutomationProperties.AutomationId="DemoHistory"/>
+   </Grid>
+   <Grid Grid.Row="2" Margin="24,0,24,0" x:Name="PlannerPanel">
+    <Grid.ColumnDefinitions><ColumnDefinition Width="234"/><ColumnDefinition Width="20"/><ColumnDefinition Width="*"/><ColumnDefinition Width="20"/><ColumnDefinition Width="222"/></Grid.ColumnDefinitions>
+    <Border Background="#101010" CornerRadius="10" BorderBrush="#242424" BorderThickness="1" Padding="16">
+     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+      <StackPanel>
+       <DockPanel Margin="0,0,0,14"><TextBlock x:Name="RouteCount" DockPanel.Dock="Right" Foreground="#757575"/><TextBlock Text="BIBLIOTHEK" FontSize="10" FontWeight="SemiBold" Foreground="#858585"/></DockPanel>
+       <ComboBox x:Name="RoutesBox" DisplayMemberPath="Name" SelectionChanged="SelectRoute" AutomationProperties.AutomationId="Routes"/>
+       <Grid Margin="0,10,0,0"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="7"/><ColumnDefinition/></Grid.ColumnDefinitions>
+        <Button Content="+ Neue Route" Click="NewRoute" FontSize="11" Padding="5,8"/><Button Grid.Column="2" Content="Duplizieren" Click="DuplicateRoute" FontSize="11" Padding="5,8"/>
+       </Grid>
+       <Separator/>
+       <TextBlock Text="ROUTENNAME" FontSize="10" Foreground="#858585" FontWeight="SemiBold" Margin="0,0,0,9"/>
+       <TextBox x:Name="NameBox" MaxLength="120" TextChanged="RenameRoute" AutomationProperties.AutomationId="RouteName"/>
+       <Grid Margin="0,10,0,0"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="7"/><ColumnDefinition/></Grid.ColumnDefinitions>
+        <Button Content="Speichern" Click="SaveRoute" Style="{StaticResource PrimaryButton}" FontSize="12" Padding="5,8" AutomationProperties.AutomationId="SaveRoute"/><Button Grid.Column="2" Content="Laden" Click="ReloadRoute" FontSize="12" Padding="5,8"/>
+       </Grid>
+       <Separator/>
+       <DockPanel><TextBlock x:Name="RadiusLabel" DockPanel.Dock="Right" Foreground="#DADADA" FontSize="11"/><TextBlock Text="SUCHRADIUS" FontSize="10" Foreground="#858585" FontWeight="SemiBold"/></DockPanel>
+       <Slider x:Name="RadiusSlider" Minimum="0" Maximum="1500" ValueChanged="ChangeRadius" Margin="0,10,0,5" AutomationProperties.Name="Suchradius"/>
+       <ComboBox x:Name="ModeBox" SelectedIndex="0" SelectionChanged="ChangeMode" FontSize="11"><ComboBoxItem Content="Entlang der Strecke"/><ComboBoxItem Content="Um jeden Wegpunkt"/></ComboBox>
+       <ComboBox x:Name="UnitsBox" SelectedIndex="0" SelectionChanged="ChangeUnits" Margin="0,8,0,0" FontSize="11"><ComboBoxItem Content="Karteneinheiten · KE"/><ComboBoxItem Content="% der Kartenbreite"/></ComboBox>
+       <TextBlock Text="0–3000 KE pro Achse. Abstände beziehen sich auf deine Arbeitsfläche." TextWrapping="Wrap" FontSize="10" Foreground="#777777" Margin="0,10,0,0"/>
+       <Separator/>
+       <TextBlock Text="DATEIEN &amp; DATEN" FontSize="10" Foreground="#858585" FontWeight="SemiBold" Margin="0,0,0,10"/>
+       <Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="7"/><ColumnDefinition/></Grid.ColumnDefinitions><Button Content="Importieren" Click="ImportRoute" FontSize="11" Padding="5,8"/><Button Grid.Column="2" Content="Exportieren" Click="ExportRoute" FontSize="11" Padding="5,8"/></Grid>
+       <Button Content="Orte importieren" Click="ImportMarkers" Margin="0,8,0,0" FontSize="11"/>
+       <Button Content="Route löschen" Click="DeleteRoute" Style="{StaticResource QuietButton}" FontSize="11" Margin="0,7,0,0"/>
+       <Button Content="Lokale Daten löschen" Click="ClearData" Style="{StaticResource QuietButton}" FontSize="10"/>
       </StackPanel>
+     </ScrollViewer>
+    </Border>
+    <Grid Grid.Column="2">
+     <Grid.RowDefinitions><RowDefinition Height="58"/><RowDefinition Height="*"/><RowDefinition Height="64"/></Grid.RowDefinitions>
+     <DockPanel>
+      <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Top"><Button Content="−" Click="ZoomOut" Width="32" Padding="0" Margin="0,0,6,0" AutomationProperties.Name="Verkleinern"/><Button Content="+" Click="ZoomIn" Width="32" Padding="0" Margin="0,0,6,0" AutomationProperties.Name="Vergrößern"/><Button Content="Einpassen" Click="FitMap" FontSize="11"/></StackPanel>
+      <StackPanel><TextBlock x:Name="MapVersionLabel" FontSize="15" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/><TextBlock x:Name="MapSourceLabel" FontSize="10" Foreground="#808080" Margin="0,5,0,0" TextTrimming="CharacterEllipsis"/></StackPanel>
      </DockPanel>
+     <Border Grid.Row="1" CornerRadius="10" BorderBrush="#292929" BorderThickness="1" Background="#0A0A0A" ClipToBounds="True">
+      <Grid>
+       <local:MapView x:Name="PlannerMap" AutomationProperties.AutomationId="PlannerMap" AutomationProperties.Name="Arbeitsfläche, Linksklick setzt Wegpunkte"/>
+       <StackPanel x:Name="EmptyMapHint" VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False" Margin="24">
+        <TextBlock Text="＋" FontSize="36" Foreground="#606060" HorizontalAlignment="Center"/>
+        <TextBlock Text="Hier beginnt deine nächste Route." FontSize="16" FontWeight="SemiBold" Foreground="#BBBBBB" HorizontalAlignment="Center" Margin="0,14,0,7"/>
+        <TextBlock Text="Karte öffnen oder direkt Wegpunkte setzen." Foreground="#707070" FontSize="11" HorizontalAlignment="Center"/>
+       </StackPanel>
+      </Grid>
+     </Border>
+     <Grid Grid.Row="2" Margin="0,12,0,0"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+      <StackPanel><TextBlock x:Name="RouteMetrics" FontSize="11" Foreground="#A0A0A0"/><TextBlock Text="Klick: setzen  ·  Ziehen: bearbeiten  ·  Rechts ziehen: verschieben" FontSize="10" Foreground="#666666" Margin="0,6,0,0" TextWrapping="Wrap"/></StackPanel>
+      <Button Grid.Column="1" Content="Verlauf öffnen" Click="ShowHistory" Style="{StaticResource QuietButton}" FontSize="11" VerticalAlignment="Top"/>
+     </Grid>
+    </Grid>
+    <Border Grid.Column="4" Background="#101010" BorderBrush="#242424" BorderThickness="1" CornerRadius="10" Padding="14">
+     <Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+      <StackPanel><DockPanel><TextBlock x:Name="PointCountLabel" DockPanel.Dock="Right" Foreground="#757575"/><TextBlock Text="WEGPUNKTE" FontSize="10" Foreground="#858585" FontWeight="SemiBold"/></DockPanel>
+       <TextBlock Text="Start → Zwischenziele → Ziel" Foreground="#676767" FontSize="10" Margin="0,9,0,14"/>
+      </StackPanel>
+      <Grid Grid.Row="1"><ListBox x:Name="PointsBox" SelectionChanged="SelectPoint" AutomationProperties.AutomationId="Waypoints">
+       <ListBox.ItemTemplate><DataTemplate><StackPanel><TextBlock Text="{Binding Label}" Foreground="#D0D0D0" FontSize="12"/><TextBlock Text="{Binding Coordinates}" Foreground="#757575" FontSize="10" Margin="0,5,0,0"/></StackPanel></DataTemplate></ListBox.ItemTemplate>
+      </ListBox><TextBlock x:Name="EmptyPointsHint" Text="Deine Wegpunkte erscheinen hier." TextWrapping="Wrap" Foreground="#666666" Margin="6,20" FontSize="11"/></Grid>
+      <StackPanel Grid.Row="2">
+       <StackPanel Orientation="Horizontal" Margin="0,10,0,0"><Button Content="↑" Click="MoveUp" Width="32" Padding="0" Margin="0,0,6,0"/><Button Content="↓" Click="MoveDown" Width="32" Padding="0" Margin="0,0,6,0"/><Button Content="Entfernen" Click="RemovePoint" FontSize="10" Padding="7,8"/></StackPanel>
+       <Separator/>
+       <Grid><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="8"/><ColumnDefinition/></Grid.ColumnDefinitions><StackPanel><TextBlock Text="X / KE" FontSize="10" Foreground="#777777" Margin="0,0,0,7"/><TextBox x:Name="PointX" Text="1500" AutomationProperties.Name="Wegpunkt X"/></StackPanel><StackPanel Grid.Column="2"><TextBlock Text="Y / KE" FontSize="10" Foreground="#777777" Margin="0,0,0,7"/><TextBox x:Name="PointY" Text="1500" AutomationProperties.Name="Wegpunkt Y"/></StackPanel></Grid>
+       <Button Content="Punkt hinzufügen" Click="AddPoint" Margin="0,9,0,0" FontSize="11" AutomationProperties.AutomationId="AddPoint"/>
+       <Button Content="Position übernehmen" Click="SetPoint" Margin="0,7,0,0" FontSize="11"/>
+       <Separator/>
+       <CheckBox x:Name="MarkerTool" Content="Eigene Orte setzen" Checked="ChangeMarkerTool" Unchecked="ChangeMarkerTool" FontSize="11"/>
+       <CheckBox x:Name="AllMarkers" Content="Alle Orte zeigen" Checked="ChangeAllMarkers" Unchecked="ChangeAllMarkers" FontSize="11" Margin="0,10,0,0"/>
+       <TextBlock Text="○ Statische Daten · □ Eigener Ort" FontSize="10" Foreground="#686868" Margin="0,10,0,0" TextWrapping="Wrap"/>
+      </StackPanel>
+     </Grid>
     </Border>
    </Grid>
+   <Grid Grid.Row="2" Margin="24,0,24,18" x:Name="HistoryPanel" Visibility="Collapsed">
+    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+    <DockPanel Margin="0,0,0,20"><Button Content="← Zur Planung" Click="HideHistory" DockPanel.Dock="Right"/><StackPanel><TextBlock Text="Dein Routenverlauf" FontSize="22" FontWeight="SemiBold"/><TextBlock Text="Manuelle Routengänge. Tatsächliche Zeit. Keine erfundenen Spielwerte." Foreground="#858585" Margin="0,8,0,0"/></StackPanel></DockPanel>
+    <Border Grid.Row="1" Background="#101010" CornerRadius="10" Padding="18" BorderBrush="#282828" BorderThickness="1"><Grid>
+     <ListBox x:Name="HistoryBox" AutomationProperties.AutomationId="RouteHistory"/>
+     <TextBlock x:Name="EmptyHistoryHint" Text="Noch kein Routengang gespeichert. Starte eine eigene Route und bestätige ihre Wegpunkte manuell." TextWrapping="Wrap" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="#777777" MaxWidth="420" TextAlignment="Center"/>
+    </Grid></Border>
+   </Grid>
+   <Border Grid.Row="3" BorderBrush="#242424" BorderThickness="0,1,0,0" Padding="24,0">
+    <DockPanel><StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center"><TextBlock x:Name="SessionStatus" Text="" Foreground="#B0B0B0" FontSize="10" Margin="0,0,16,0"/><TextBlock Text="●  LOKAL  /  KEINE FORTNITE-VERBINDUNG" FontSize="9" Foreground="#686868"/></StackPanel><TextBlock x:Name="StatusLabel" Text="Bereit" FontSize="10" Foreground="#777777" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/></DockPanel>
+   </Border>
   </Grid>
-  <TextBlock Grid.Row="3" x:Name="StatusLabel" Text="Bereit · offline" Margin="0,12,0,0" TextWrapping="Wrap" Foreground="#BDC5CD"/>
- </Grid>
+ </Border>
 </Window>

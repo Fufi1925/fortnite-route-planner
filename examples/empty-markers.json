@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 3,
+  "routes": [],
+  "maps": [
+    {
+      "id": "WORKSPACE-3000-V1",
+      "name": "Eigene Orte",
+      "source": "Eigene Eingaben",
+      "spawns": []
+    }
+  ],
+  "activities": []
+}

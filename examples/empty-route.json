@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 3,
+  "routes": [
+    {
+      "id": "7eecb03f-5030-4773-93c8-7a4a646ce544",
+      "name": "Meine Route",
+      "mapVersion": "WORKSPACE-3000-V1",
+      "radius": 110,
+      "radiusMode": "Corridor",
+      "points": []
+    }
+  ],
+  "maps": [],
+  "activities": []
+}

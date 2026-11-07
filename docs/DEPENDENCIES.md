@@ -1,6 +1,6 @@
 # Abhängigkeiten und Lizenzen
 
-Projektcode, selbst erstellte Vektorkarte und generierte Demo-Punkte: `LICENSE` (MIT). Keine übernommenen Epic-/Tracker-/Overwolf-Assets oder SDKs.
+Projektcode und leere Datenvorlagen: `LICENSE` (MIT). Keine übernommenen Epic-/Tracker-/Overwolf-Assets oder SDKs.
 
 - .NET SDK **10.0.403**, im Build verwendet, über `global.json` festgelegt (neuere Patches desselben Featurebands erlaubt).
 - Zielframeworks `net10.0` und `net10.0-windows`; WPF mit WindowsDesktop Framework. Das Publish-Skript fixiert Runtime **10.0.14** für den aufgezeichneten Build. Spätere Sicherheitsupdates bewusst aktualisieren, bauen und prüfen.

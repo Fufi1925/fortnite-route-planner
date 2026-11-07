@@ -48,7 +48,7 @@ Check("Radius: Wegpunkte statt Korridor", () => {
     True(index.Query(r).Count==1);r.RadiusMode=RadiusMode.Waypoints;True(index.Query(r).Count==0);
 });
 Check("Planungszustand: leerer Name verhindert keinen Kartenfilter", () => {
-    var r=Line() with {Name=""};new SpawnIndex(DemoData.Spawns).Query(r);
+    var r=Line() with {Name=""};new SpawnIndex(TestFixtures.Spawns).Query(r);
     Reject(()=>Validation.Route(r));
 });
 Check("Kartengrenzen: Ecken zulässig, NaN/Infinity/außerhalb ungültig", () => {
@@ -57,34 +57,35 @@ Check("Kartengrenzen: Ecken zulässig, NaN/Infinity/außerhalb ungültig", () =>
     {True(!Geometry.IsOnMap(p));Reject(()=>Validation.Route(new() {Points=[p]}));}
 });
 Check("Index: deterministisch identisch mit vollständiger Suche", () => {
-    var random=new Random(41);var index=new SpawnIndex(DemoData.Spawns);
+    var random=new Random(41);var index=new SpawnIndex(TestFixtures.Spawns);
     foreach(var mode in Enum.GetValues<RadiusMode>()) for(int i=0;i<40;i++) {
         var r=new RoutePlan {Radius=random.NextDouble()*1500, RadiusMode=mode,
             Points=Enumerable.Range(0,random.Next(0,12)).Select(_=>new MapPoint(random.NextDouble()*3000,random.NextDouble()*3000)).ToList()};
-        var brute=DemoData.Spawns.Where(p=>Geometry.PointToRoute(p.Position,r.Points,mode)<=r.Radius+Geometry.Epsilon).Select(p=>p.Id).Order().ToArray();
+        var brute=TestFixtures.Spawns.Where(p=>Geometry.PointToRoute(p.Position,r.Points,mode)<=r.Radius+Geometry.Epsilon).Select(p=>p.Id).Order().ToArray();
         True(index.Query(r).Select(p=>p.Id).Order().SequenceEqual(brute));
     }
 });
 Check("Import/Export: vollständiger Roundtrip", () => {
-    var r=DemoData.Example();r.Name="Umlaute äöü";
+    var r=TestFixtures.Route();r.Name="Umlaute äöü";
     var doc=RouteJson.Parse(RouteJson.Serialize(new() {Routes=[r]}));
     True(doc.Routes[0].Id==r.Id&&doc.Routes[0].Name==r.Name&&doc.Routes[0].Points.SequenceEqual(r.Points));
 });
-Check("Mitgelieferte Beispieldatei: importierbar und passende Karte", () => {
-    var example=RouteJson.Parse(RouteJson.ReadBounded("examples/nordpfad-demo.route.json"));
-    True(example.Routes.Count==1&&example.DemoHistory.Count==0&&DemoData.IsCurrent(example.Routes[0]));
-    True(example.Routes[0].Points.SequenceEqual(DemoData.Example().Points));
-});
-Check("Schema: Migration v1 nach v2", () => {
-    var text=Json(Line()).Replace("\"schemaVersion\": 2","\"schemaVersion\": 1");
-    var doc=RouteJson.Parse(Enc(text));True(doc.SchemaVersion==2&&doc.DemoHistory.Count==0&&doc.Routes.Count==1);
+Check("Schema: Migration v1/v2 nach v3 ohne simulierten Verlauf", () => {
+    foreach(int version in new[]{1,2}) {
+        var text=Json(Line()).Replace("\"schemaVersion\": 3","\"schemaVersion\": "+version);
+        var node=System.Text.Json.Nodes.JsonNode.Parse(text)!.AsObject();
+        node["demoHistory"]=new System.Text.Json.Nodes.JsonArray(new System.Text.Json.Nodes.JsonObject { ["simulated"]=true });
+        var doc=RouteJson.Parse(Enc(node.ToJsonString()));
+        True(doc.SchemaVersion==3&&doc.Activities.Count==0&&doc.Routes.Count==1);
+        True(!Encoding.UTF8.GetString(RouteJson.Serialize(doc)).Contains("demoHistory"));
+    }
 });
 Check("Schema: unbekannte und fehlende Version ablehnen", () => {
     Reject(()=>RouteJson.Parse(Enc("{\"schemaVersion\":99,\"routes\":[]}")));
     Reject(()=>RouteJson.Parse(Enc("{\"routes\":[]}")));
 });
 Check("Version: alte/fremde Karte warnbar und keine Spawns", () => {
-    var r=Line() with {MapVersion="ALT"};True(!DemoData.IsCurrent(r));True(new SpawnIndex(DemoData.Spawns).Query(r).Count==0);
+    var r=Line() with {MapVersion="ALT"};True(r.MapVersion!=MapSpace.WorkspaceId);True(new SpawnIndex(TestFixtures.Spawns).Query(r).Count==0);
     True(RouteJson.Parse(Enc(Json(r))).Routes[0].MapVersion=="ALT");
 });
 Check("Import: defekt, null, doppelte Schlüssel, fremde Felder", () => {
@@ -94,7 +95,7 @@ Check("Import: defekt, null, doppelte Schlüssel, fremde Felder", () => {
 });
 Check("Import: fehlende Identität und Koordinaten", () => {
     Reject(()=>RouteJson.Parse(Enc(Json(Line()).Replace("\"x\": 0,",""))));
-    Reject(()=>RouteJson.Parse(Enc(Json(Line()).Replace("\"mapVersion\": \""+DemoData.MapVersion+"\",",""))));
+    Reject(()=>RouteJson.Parse(Enc(Json(Line()).Replace("\"mapVersion\": \""+MapSpace.WorkspaceId+"\",",""))));
 });
 Check("Import: ungültige Radien und Enum", () => {
     foreach(double radius in new[]{-1,1501,double.NaN,double.PositiveInfinity})Reject(()=>Validation.Route(Line() with {Radius=radius}));
@@ -125,26 +126,50 @@ Check("Beschädigter Datenträger bleibt nach Load unverändert", () => {
     try {var store=new LocalStore(directory);File.WriteAllText(store.LibraryPath,"broken");Reject(()=>store.Load());True(File.ReadAllText(store.LibraryPath)=="broken");}
     finally {Directory.Delete(directory,true);}
 });
-Check("Demo: deterministische Events und echte Reducer-Integration", () => {
-    var r=DemoData.Example();var provider=new OfflineDemoProvider();var events=provider.CreateEvents(r);
-    True(events.SequenceEqual(provider.CreateEvents(r)));True(provider.SourceLabel.Contains("DEMO"));
-    var session=new DemoSession(r);DemoSummary? result=null;
-    foreach(var item in events)result=session.Apply(item);
-    True(session.Finished&&result is not null);Near(result!.Distance,Geometry.Length(r.Points));
-    True(result.SimulatedStops==r.Points.Count&&result.DurationSeconds==r.Points.Count*30+10);
-    var roundtrip=RouteJson.Parse(RouteJson.Serialize(new(){DemoHistory=[result]}));True(roundtrip.DemoHistory.Count==1);
-    Reject(()=>session.Apply(events[0]));
+Check("Manueller Routengang: nur Aktionen und gemessene Zeit", () => {
+    var route=TestFixtures.Route();var now=DateTimeOffset.UtcNow;
+    var session=new ManualRouteSession(route,()=>now);
+    now=now.AddSeconds(45);True(session.VisitedPoints==0&&session.ElapsedSeconds==45);
+    RouteActivity? result=null;
+    foreach(var point in route.Points) result=session.Advance();
+    True(result is not null&&result.Completed&&result.VisitedPoints==route.Points.Count&&result.DurationSeconds==45);
+    Near(result!.PlannedDistance,Geometry.Length(route.Points));
+    var doc=RouteJson.Parse(RouteJson.Serialize(new(){Activities=[result]}));True(doc.Activities.Count==1);
+    Reject(()=>session.Advance());Reject(()=>session.Finish());
 });
-Check("Demo: Start fehlt, Zeit rückwärts, Position ungültig", () => {
-    var s=new DemoSession(Line());Reject(()=>s.Apply(new(DemoEventKind.Position,1,new(1,1))));
-    s.Apply(new(DemoEventKind.Started,0,null));Reject(()=>s.Apply(new(DemoEventKind.Started,0,null)));
-    s.Apply(new(DemoEventKind.Position,30,new(1,1)));Reject(()=>s.Apply(new(DemoEventKind.Position,29,new(2,2))));
-    Reject(()=>s.Apply(new(DemoEventKind.Position,31,new(-1,1))));
-    Reject(()=>new OfflineDemoProvider().CreateEvents(new()));
+Check("Manueller Routengang: Abbruch und unveränderliche Routenkopie", () => {
+    var route=TestFixtures.Route();var now=DateTimeOffset.UtcNow;
+    var session=new ManualRouteSession(route,()=>now);session.Advance();
+    route.Points.Clear();now=now.AddSeconds(12);var result=session.Finish();
+    True(!result.Completed&&result.VisitedPoints==1&&result.TotalPoints==5&&result.DurationSeconds==12);
+    Reject(()=>new ManualRouteSession(new()));Reject(()=>new ManualRouteSession(Line() with {MapVersion="DEMO-ALT"}));
+});
+Check("Karten und Orte: echte Einträge speichern und passend filtern", () => {
+    var map=new MapAsset {Spawns=[new("manual",new(50,1),true),new("static",new(50,20))]};
+    var doc=RouteJson.Parse(RouteJson.Serialize(new(){Maps=[map]}));
+    True(doc.Maps[0].Spawns[0].ManuallyConfirmed);
+    True(new SpawnIndex(map.Spawns,map.Id).Query(Line()).Single().Id=="manual");
+    True(new SpawnIndex(map.Spawns,"OTHER").Query(Line()).Count==0);
+});
+Check("Karten: Pfade, fehlende Metadaten und falsche Orte ablehnen", () => {
+    Reject(()=>Validation.Map(new(){Id="../../outside"}));
+    Reject(()=>Validation.Map(new(){Spawns=[new("p",new(-1,5))]}));
+    Reject(()=>Validation.Map(new(){Spawns=[new("p",new(1,5)),new("p",new(2,5))]}));
+    Reject(()=>RouteJson.Parse(Enc("{\"schemaVersion\":3,\"routes\":[],\"maps\":[{\"id\":\"WORKSPACE-3000-V1\"}]}")));
+    Reject(()=>RouteJson.Serialize(new(){Maps=[new(),new()]}));
+});
+Check("Keine automatischen Daten bei neuem Start", () => {
+    var doc=new LibraryDocument();True(doc.Routes.Count==0&&doc.Maps.Count==0&&doc.Activities.Count==0);
+});
+Check("Palette: nur Schwarz, Weiß und Grau in der Anwendungsoberfläche", () => {
+    var paths=Directory.GetFiles("src/RoutePlanner.App","*.xaml").Concat(new[]{"src/RoutePlanner.App/MapView.cs","src/RoutePlanner.App/Dialogs.cs"});
+    foreach(var path in paths) foreach(System.Text.RegularExpressions.Match match in System.Text.RegularExpressions.Regex.Matches(File.ReadAllText(path),"#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?(?![0-9A-Fa-f])")) {
+        var rgb=match.Value[^6..];True(rgb[..2].Equals(rgb[2..4],StringComparison.OrdinalIgnoreCase)&&rgb[..2].Equals(rgb[4..6],StringComparison.OrdinalIgnoreCase));
+    }
 });
 Check("Performance: 100.000 Punkte / 100 Filter, Referenzergebnis", () => {
     var random=new Random(72);var points=Enumerable.Range(0,100000).Select(i=>new SpawnPoint(i.ToString(),new(random.NextDouble()*3000,random.NextDouble()*3000))).ToArray();
-    var r=DemoData.Example();var watch=Stopwatch.StartNew();var index=new SpawnIndex(points);double build=watch.Elapsed.TotalMilliseconds;
+    var r=TestFixtures.Route();var watch=Stopwatch.StartNew();var index=new SpawnIndex(points);double build=watch.Elapsed.TotalMilliseconds;
     var expected=points.Count(p=>Geometry.PointToRoute(p.Position,r.Points,r.RadiusMode)<=r.Radius+Geometry.Epsilon);
     watch.Restart();for(int i=0;i<100;i++)True(index.Query(r).Count==expected);watch.Stop();
     Console.WriteLine($"PROFILE index={build:0.0}ms query-mean={watch.Elapsed.TotalMilliseconds/100:0.00}ms " +
@@ -152,3 +177,9 @@ Check("Performance: 100.000 Punkte / 100 Filter, Referenzergebnis", () => {
 });
 Console.WriteLine($"RESULT {passed} passed; {failed} failed");
 return failed==0?0:1;
+
+static class TestFixtures
+{
+    public static IReadOnlyList<SpawnPoint> Spawns {get;}=Enumerable.Range(0,600).Select(i=>new SpawnPoint(i.ToString(),new(100+(i*947+73)%2800,100+(i*613+181)%2800))).ToArray();
+    public static RoutePlan Route()=>new(){Name="Teststrecke",Points=[new(600,2400),new(900,1900),new(1450,1600),new(1700,950),new(2400,650)]};
+}
