@@ -1,0 +1,30 @@
+name: Publish verified Windows release
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: Successful Windows build run ID
+        required: true
+        default: '42321631315'
+      tag:
+        description: Release version tag
+        required: true
+        default: 'v0.1.0'
+permissions:
+  contents: read
+jobs:
+  publish:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    permissions:
+      actions: read
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Publish assets from the successful Windows build
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_RUN_ID: ${{ inputs.run_id }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: ./scripts/publish-github-release.ps1 -RunId $env:RELEASE_RUN_ID -Tag $env:RELEASE_TAG
