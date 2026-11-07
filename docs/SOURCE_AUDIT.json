@@ -121,5 +121,21 @@
       "https://assets-unreal2-epic-prod-us2.s3.dualstack.us-east-1.amazonaws.com/original/4X/f/c/4/fc4342c50e1a0abf34943e019ee90bacccc62950.pdf"
     ],
     "ordinaryLaunch": "Optional fixed Epic protocol activation; no game-state access; actual Fortnite installation/launch not tested"
+  },
+  "automaticRouteWindowReview": {
+    "checkedUtc": "2026-11-07",
+    "decisionDocument": "AUTO_ROUTE_WINDOW.md",
+    "implementation": "Ordinary WPF Topmost at route start and ShowActivated=false; no game detection or host integration",
+    "verificationScope": "Real desktop screenshot over active neutral CI window, subject to actual successful Windows run",
+    "fortniteCompatibility": "Not tested; exclusive fullscreen not guaranteed",
+    "referenceUrls": [
+      "https://tracker.gg/fortnite/desktop-app/",
+      "https://dev.overwolf.com/ow-native/getting-started/onboarding-resources/basic-sample-app/",
+      "https://dev.overwolf.com/ow-native/guides/game-compliance/overview/",
+      "https://learn.microsoft.com/en-us/dotnet/api/system.windows.window.topmost?view=windowsdesktop-10.0",
+      "https://learn.microsoft.com/en-us/dotnet/api/system.windows.window.showactivated?view=windowsdesktop-10.0",
+      "https://learn.microsoft.com/en-us/gaming/game-bar/overview",
+      "https://learn.microsoft.com/en-us/gaming/game-bar/guide/distribution"
+    ]
   }
 }

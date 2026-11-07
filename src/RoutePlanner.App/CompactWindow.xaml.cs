@@ -1,5 +1,4 @@
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Media;
 using RoutePlanner.Core;
 using Geometry = RoutePlanner.Core.Geometry;
@@ -9,7 +8,12 @@ public partial class CompactWindow : Window
 {
     public event Action? AdvanceRequested;
     public event Action? StopRequested;
-    public CompactWindow() { InitializeComponent(); Loaded += (_,_) => PlaceTopRight(); }
+    public CompactWindow() : this(false) { }
+    public CompactWindow(bool pinForRoute)
+    {
+        InitializeComponent(); Topmost = pinForRoute;
+        Loaded += (_,_) => PlaceTopRight();
+    }
     private void PlaceTopRight()
     {
         var area = SystemParameters.WorkArea;
@@ -31,6 +35,10 @@ public partial class CompactWindow : Window
     }
     private void AdvancePoint(object sender,RoutedEventArgs e) => AdvanceRequested?.Invoke();
     private void StopRoute(object sender,RoutedEventArgs e) => StopRequested?.Invoke();
-    private void TopmostChanged(object sender,RoutedEventArgs e) => Topmost = ((CheckBox)sender).IsChecked == true;
+    private void ShowDisplayHelp(object sender,RoutedEventArgs e) => Dialogs.Show(this,
+        "Dieses Routenfenster wird beim Routenstart automatisch oben rechts und im Vordergrund geöffnet.\n\n"+
+        "Für die Anzeige über einem Spiel Fensterbetrieb oder randloses Vollbild wählen. Exklusives Vollbild kann das Desktop-Fenster verdecken.\n\n"+
+        "Zum Bedienen bei Bedarf mit Alt-Tab wechseln. ‚Fenster im Vordergrund‘ lässt sich abschalten; ‚Zur Planung‘ bringt dich zurück.\n\n"+
+        "Die App erkennt weder Fortnite noch deinen Fenstermodus. Eine tatsächliche In-Game-Anzeige wurde hier nicht mit Fortnite getestet.","Routenfenster anzeigen");
     private void ReturnToPlanner(object sender,RoutedEventArgs e) => Close();
 }

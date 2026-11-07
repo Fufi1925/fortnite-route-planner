@@ -22,7 +22,7 @@
      <Button x:Name="PublicMapButton" Content="Fortnite-Karte laden" Click="OpenPublicMap" Margin="0,0,8,0" AutomationProperties.AutomationId="LoadPublicMap"/>
      <Button Content="Eigene Karte" Click="OpenMap" Margin="0,0,8,0" AutomationProperties.AutomationId="OpenMap"/>
      <Button Content="Kompakt" Click="OpenCompact" Margin="0,0,8,0" AutomationProperties.AutomationId="OpenCompact"/>
-     <Button x:Name="StartRouteButton" Content="Route starten  →" Click="StartRoute" Style="{StaticResource PrimaryButton}" AutomationProperties.AutomationId="StartRoute"/>
+     <Button x:Name="StartRouteButton" Content="Route starten  →" Click="StartRoute" Style="{StaticResource PrimaryButton}" AutomationProperties.AutomationId="StartRoute" ToolTip="Öffnet das Routenfenster automatisch oben rechts im Vordergrund. Für Spiele im Fenster oder randlosen Vollbild vorgesehen."/>
     </StackPanel>
    </Grid>
    <Grid Grid.Row="2" Margin="24,0,24,0" x:Name="PlannerPanel">

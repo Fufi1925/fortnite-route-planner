@@ -14,7 +14,7 @@ public sealed class PublicFortniteMapClient : IDisposable
     {
         client = new(testHandler ?? new HttpClientHandler { AllowAutoRedirect = false, UseDefaultCredentials = false });
         client.Timeout = TimeSpan.FromSeconds(25);
-        client.DefaultRequestHeaders.UserAgent.ParseAdd("RoutePlanner/0.5.0");
+        client.DefaultRequestHeaders.UserAgent.ParseAdd("RoutePlanner/0.6.0");
     }
     public async Task<PublicMapSnapshot> DownloadAsync(CancellationToken cancellationToken = default)
     {

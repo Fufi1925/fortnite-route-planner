@@ -458,7 +458,7 @@ public partial class MainWindow : Window
     private void OpenCompact(object sender, RoutedEventArgs e)
     {
         if (compact is not null) { compact.Activate(); return; }
-        compact = new CompactWindow(); compact.AdvanceRequested += AdvanceSession; compact.StopRequested += EndSession;
+        compact = new CompactWindow(pinForRoute:session is not null); compact.AdvanceRequested += AdvanceSession; compact.StopRequested += EndSession;
         compact.Closed += (_,_) => { compact = null; if (!closing) { Show(); Activate(); } };
         RefreshProgress(); compact.Show(); Hide();
     }

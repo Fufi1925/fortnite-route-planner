@@ -1,3 +1,7 @@
+# 0.6.0
+
+Routenstart öffnet automatisch ein oben rechts angeheftetes normales Desktop-Routenfenster. Sichtbarer Pin-Schalter und Topmost-Eigenschaft synchron, ohne Selbstaktivierung beim ersten Show. Reine Vorschau ohne Sitzung bleibt nicht angeheftet. Anzeigehilfe erklärt Fenster/randloses Vollbild und Alt-Tab. Neues nur auf CI genutztes Desktop-Aufnahmeverfahren prüft die tatsächliche Sichtbarkeit über einem aktiven neutralen Fenster; keine Aufnahmefunktion in der App. Recherche zu Tracker.gg, Overwolf und Game Bar dokumentiert, keine garantierte oder hier getestete Fortnite-In-Game-Anzeige.
+
 # 0.5.0
 
 Gespeicherte, unabhängige lokale Filter für normale, vergrabene und seltene Kisten sowie sonstige/untypisierte Orte. Alle acht Kistenkombinationen einschließlich keiner Kiste; Typfilter gelten auch im Alle-Orte-Modus. Typ neuer eigener Markierungen auswählbar; Import erhält deklarierte Typen. Schema 5 migriert ältere Dateien ohne Kategorie-Erfindung. Eigener Routenmodus und Kompaktfenster ohne Lootpositionen. Live-Truhenerkennung, Charakterverfolgung, optimaler Leave-Zeitpunkt mangels verifizierter Schnittstelle und Appfreigabe nicht enthalten; erneute Quellenprüfung in LIVE_AUTOMATION_REVIEW.md. Optionaler normaler Epic-Startauftrag auf bewusstem Routenstart; nur feste dokumentierte URI, keine Bestätigung eines laufenden Spiels.

@@ -1,4 +1,4 @@
-# Testbericht 0.5
+# Testbericht 0.6
 
 Stand: 2026-11-07. Lokale Umgebung Linux x64, SDK 10.0.403. Die aktuellen lokalen Ausgaben dokumentieren 49 erfolgreiche Kernprüfungen und einen fehlerfreien WPF-/UI-Test-Build. Für die anschließende tatsächliche Windows-Ausführung, WebView2 und gepackte EXE sind ausschließlich die erfolgreichen CI-Ausgaben des jeweiligen Builds und das Artefakt `offline-verification` maßgeblich. Keine bloße Kompilierung wird als Windows-Ausführung ausgegeben.
 
@@ -8,7 +8,7 @@ Stand: 2026-11-07. Lokale Umgebung Linux x64, SDK 10.0.403. Die aktuellen lokale
 - `dotnet build tests/RoutePlanner.UiSmoke -c Release --no-restore`: Windows-UI-Test und Anwendung kompiliert.
 - `python3 scripts/audit-source.py`: ergänzende Prüfung von Anwendungsdateien, Manifest und Abhängigkeiten.
 
-Die vollständigen lokalen Ausgaben stehen in `docs/test-results/core-tests.txt`, `windows-build.txt` und `source-audit.txt`. Das ältere `windows-publish.txt` dokumentiert den ursprünglichen Publish-Lauf; für den 0.5-Build sind ausschließlich die neuen CI-Ausgaben maßgeblich.
+Die vollständigen lokalen Ausgaben stehen in `docs/test-results/core-tests.txt`, `windows-build.txt` und `source-audit.txt`. Das ältere `windows-publish.txt` dokumentiert den ursprünglichen Publish-Lauf; für den 0.6-Build sind ausschließlich die neuen CI-Ausgaben maßgeblich.
 
 ## Kernprüfungen
 
@@ -43,3 +43,9 @@ Der erste Windows-Lauf 42357929656 bestätigte Farberhalt und echten Fortnite.GG
 Lokal tatsächlich 49 Kernprüfungen erfolgreich, 0 Fehler, einschließlich der festen Epic-Launcher-URI. Maßgeblich sind die aktuellen Testausgaben. Neue Prüfungen testen alle acht Kistenfilterkombinationen mit Bereich/Radius/Wegpunktmodus, Erhalt der unveränderten gespeicherten Daten beim Ausblenden, Typ-/Filter-Roundtrip, unabhängige Routenkopien, Migration untypisierter Altdateien nach Schema 5 sowie ungültige, doppelte und fehlende Typen. WPF und UI-Prüfung kompilieren.
 
 Der anschließende Windows-Lauf bedient zusätzlich alle acht Kombinationen über echte WPF-Checkboxen, prüft persistierte Auswahl nach Laden, Importtyp-Erhalt und den Alle-Orte-Modus. Das Kompaktfenster darf keine Lootpositionen anzeigen. Bestehende echte Karten-/WebView2-/EXE-Prüfungen bleiben erhalten. Der optionale Epic-Aufruf wird durch eine injizierte Testfunktion gezählt; fehlgeschlagene Aufträge dürfen keine Sitzung starten, ohne ausgewählte Option erfolgt kein Aufruf. Kein echter Fortnite-Prozess gestartet, keine behauptete Live-Prüfung oder berechneter optimaler Ausstieg. Für den finalen Build gelten ausschließlich dessen tatsächliche CI-Ausgaben.
+
+## Ergänzungen 0.6
+
+WPF-Anwendung und UI-Test lokal tatsächlich kompiliert, 0 Warnungen/Fehler. Neue Windows-Prüfung: Route starten öffnet automatisch oben rechts ein Topmost-Fenster mit synchronem Checkboxzustand; Abschalten und Wiedereinschalten bleiben möglich, Vorschau ohne Sitzung bleibt nicht angeheftet. Ein maximiertes neutrales Fenster wird tatsächlich aktiviert. Capture-test-desktop.ps1 erstellt auf dem wegwerfbaren Windows-Runner ein echtes Desktop-PNG, dessen Pixel HUD und aktiven neutralen Hintergrund bestätigen müssen. Diese Aufnahme ist ausschließlich Testwerkzeug und wird nicht in die App eingebaut. Für die erfolgreiche Ausführung sind die tatsächlichen CI-Ausgaben maßgeblich.
+
+Die 49 Kernprüfungen und bestehenden Karten-/WebView2-/EXE-Prüfungen bleiben Teil der Windows-Pipeline. Kein echter Fortnite-Test, keine Vollbild-/DPI-/Mehrmonitor- oder 100%-Kompatibilitätsbehauptung. Recherche und begrenzte Projektentscheidung in AUTO_ROUTE_WINDOW.md.

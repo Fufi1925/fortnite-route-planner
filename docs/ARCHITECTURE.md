@@ -1,4 +1,4 @@
-# Architektur 0.5
+# Architektur 0.6
 
 ## Komponenten
 
@@ -47,3 +47,7 @@ WebMapWindow verwendet Microsoft Edge WebView2 mit automatisch aktualisierter, s
 SpawnKind deklariert Other, Chest, BuriedChest und RareChest. RoutePlan.VisibleKinds ist eine unabhängig kopierte, gespeicherte Liste mit beliebigen eindeutigen Kombinationen einschließlich leer. SpawnIndex.Query kombiniert Typsichtbarkeit mit Geometrie; der native Alle-Orte-Modus wendet dieselben Typfilter an. Unbekannte Enum-Werte, Ganzzahlen und doppelte Werte werden abgelehnt. Schema 1…4 erhält vollständige Standard-Sichtbarkeit; alte untypisierte Punkte bleiben Other. Schema 5 verlangt explizite visibleKinds und pro Punkt kind.
 
 Typfilter sind ausschließlich Darstellungsfilter. Weder eine leere Trefferliste noch ManuallyConfirmed (eigene Ortsbestätigung) bedeutet, dass eine Truhe geöffnet oder ein Bereich leer ist. Kompaktansicht erhält keine Markierungsdaten mehr, zeigt nur die Route und nennt Live-Truhenerkennung/Leave-Zeitpunkt als nicht verfügbar. Keine Spielerposition wird erzeugt und kein Spielprozess untersucht. Optionaler Spielstart über EpicLaunchContract/EpicLauncher: nur feste dokumentierte URI und schreibgeschützte Protokollregistrierung, keine importierten Ziele, keine Live-Verbindung. Aufrufentscheidung über injizierte Testfunktion getrennt geprüft; tatsächlicher Spielstart nicht behauptet.
+
+## Automatisches Desktop-Routenfenster
+
+MainWindow.OpenCompact übergibt den aktiven Sitzungszustand an CompactWindow. Bei einer Sitzung wird Topmost vor Show gesetzt, bei reiner Vorschau nicht. ShowActivated ist bereits im XAML false; der Topmost-Schalter ist bidirektional an die echte Window-Eigenschaft gebunden. Keine wiederholte Fokus-/Z-Order-Erzwingung oder Spiel-Fensterinspektion. Loaded positioniert das Fenster im primären Windows-Arbeitsbereich oben rechts. Anzeigehilfe und Rückweg zur Planung bleiben erreichbar. Dies ist Desktop-Fensterverhalten und kein In-Game-Host; weitere Grenzen in AUTO_ROUTE_WINDOW.md.

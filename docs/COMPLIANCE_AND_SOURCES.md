@@ -1,5 +1,7 @@
 # Compliance und Quellen
 
+Version 0.6: [Automatisches Routenfenster und Overlay-Recherche](AUTO_ROUTE_WINDOW.md). Automatisches normales WPF-Topmost beim bewussten Routenstart, ohne Spielzugriff und ohne neue In-Game-Freigabe. Tatsächliche Desktop-Sichtbarkeit wird ausschließlich über einem neutralen Windows-Fenster geprüft; kein Fortnite-/Vollbildnachweis.
+
 Version 0.5: [Live-Anforderung erneut geprüft](LIVE_AUTOMATION_REVIEW.md). Einzelne Truhenöffnungen sind in der geprüften Fortnite-GEP-Referenz nicht dokumentiert; Positionsdokumentation ist keine Freigabe für diese WPF-App. Keine aktive Spielanbindung. Lokale Typfilter umgesetzt, Lootpositionen im Kompaktfenster entfernt, keine Ableitung „leer“ aus der Filteranzeige. Separat positiv geprüft: optionaler normaler Epic-Startauftrag nach dokumentierter OS-Protokollaktivierung, ohne Spielzustandszugriff oder bestätigten Spielstart.
 
 Version 0.4: [Fortnite.GG-Entscheidung und Browsergrenzen](FORTNITE_GG.md). Die unveränderte öffentliche Website wird erst nach Klick als gewöhnlicher Browserinhalt angezeigt. Keine Lizenz zur Übernahme des Website-Codes oder gesamten Truhendatensatzes behauptet; keine Synchronisierung, Prozessanbindung oder Live-Match-Daten.

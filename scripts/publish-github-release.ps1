@@ -74,7 +74,9 @@ Compress-Archive "$verification/*" -DestinationPath (Join-Path $output 'offline-
 Copy-Item (Join-Path $verification 'ui-smoke/planner.png') $output
 Copy-Item (Join-Path $verification 'ui-smoke/compact.png') $output
 Copy-Item (Join-Path $verification 'ui-smoke/fortnite-gg.png') $output
-$assets = @('RoutePlanner.exe', 'Routenatelier-win-x64.zip', 'Lizenzen.zip', 'offline-verification.zip', 'planner.png', 'compact.png', 'fortnite-gg.png')
+Copy-Item (Join-Path $verification 'ui-smoke/desktop-hud.png') $output
+if (-not (Get-Content (Join-Path $verification 'ui-smoke.txt') -Raw).Contains('PASS Routenfenster ist im echten Desktopbild über aktivem neutralen Fenster sichtbar')) { throw 'Desktop window visibility verification missing' }
+$assets = @('RoutePlanner.exe', 'Routenatelier-win-x64.zip', 'Lizenzen.zip', 'offline-verification.zip', 'planner.png', 'compact.png', 'fortnite-gg.png', 'desktop-hud.png')
 $hashes = foreach ($name in $assets) {
     '{0}  {1}' -f (Get-FileHash (Join-Path $output $name) -Algorithm SHA256).Hash.ToLowerInvariant(), $name
 }

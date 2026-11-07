@@ -34,6 +34,12 @@ Unter **Eigene Orte setzen** den Typ neuer Markierungen wählen. Das sind ausdr�
 
 **Die angefragte Live-Automatik fehlt weiterhin:** keine automatische Charakterposition oder Truhenöffnungserkennung und kein berechneter bester Leave-Zeitpunkt. Das obere rechte Kompaktfenster zeigt die Route ohne Lootpositionen und meldet diese fehlenden Daten sichtbar. [Aktuelle Quellen und Voraussetzungen](docs/LIVE_AUTOMATION_REVIEW.md).
 
+## Routenfenster automatisch anzeigen
+
+**Route starten** öffnet das Routenfenster automatisch oben rechts und hält es über normalen nicht angehefteten Fenstern sichtbar. „Fenster im Vordergrund“ ist bei aktiver Route bereits eingeschaltet und lässt sich wieder ausschalten. Das Fenster aktiviert sich beim Öffnen nicht selbst. **Kompakt** ohne gestartete Route bleibt eine nicht angeheftete Vorschau.
+
+Für die Anzeige über einem Spiel Fensterbetrieb oder **randloses Vollbild** verwenden; exklusives Vollbild kann das separate Desktop-Fenster verdecken. Die App erkennt den Spiel-/Fenstermodus nicht. Bei Bedarf per Alt-Tab bedienen, verschieben oder über **Zur Planung** zurückkehren. **Anzeigehilfe** erläutert die Schritte. Eine garantierte Fortnite-In-Game-Anzeige ist nicht nachgewiesen. [Recherche zu Tracker.gg, Overwolf und Game Bar sowie genaue Testgrenzen](docs/AUTO_ROUTE_WINDOW.md).
+
 ## Was funktioniert
 
 - Neue Routen anlegen, benennen, speichern, laden, duplizieren und löschen.

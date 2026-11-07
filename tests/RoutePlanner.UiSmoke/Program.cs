@@ -103,10 +103,15 @@ public static class Program
                 Assert(launchRequests==0,"Ohne ausgewählte Startoption kein Epic-Startauftrag");
                 await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
                 var compact = app.Windows.OfType<CompactWindow>().Single();
-                Assert(compact.IsVisible && !window.IsVisible && !compact.Topmost,"Kompaktfenster und sichere Standardeinstellung");
+                Assert(compact.IsVisible && !window.IsVisible && compact.Topmost&&!compact.ShowActivated,"Routenstart öffnet automatisch angeheftetes Fenster ohne Aktivierung");
+                Assert(((CheckBox)compact.FindName("PinWindow")).IsChecked==true,"Automatisches Anheften stimmt mit sichtbarem Schalter überein");
+                var work=SystemParameters.WorkArea;
+                Assert(Math.Abs(compact.Left+compact.ActualWidth-(work.Right-16))<2&&Math.Abs(compact.Top-(work.Top+16))<2,"Routenfenster erscheint tatsächlich oben rechts");
                 Assert(((MapView)compact.FindName("CompactMap")).VisibleSpawns.Count==0,"Kompaktfenster zeigt keine Truhen- oder Lootpositionen");
                 Assert(((SolidColorBrush)compact.Background).Color == Color.FromRgb(8,8,8),"Schwarzer Kompaktfensterhintergrund");
-                var pin = Descendants(compact).OfType<CheckBox>().Single();pin.IsChecked = true;Assert(compact.Topmost,"Normales Topmost");pin.IsChecked = false;
+                await VerifyDesktopVisibility(compact);
+                var pin = (CheckBox)compact.FindName("PinWindow");pin.IsChecked = false;Assert(!compact.Topmost,"Automatisches Anheften lässt sich ausschalten");
+                pin.IsChecked=true;Assert(compact.Topmost,"Normales Topmost wieder einschalten");
                 await Task.Delay(1200);
                 Assert(store.Load().Activities.Count == 0,"Kein automatisch erfundener Fortschritt");
                 await Capture(compact,"compact.png");
@@ -148,7 +153,7 @@ public static class Program
                 acceptLaunchRequest=true;Click(window,"Route starten  →");
                 await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
                 compact=app.Windows.OfType<CompactWindow>().Single();
-                Assert(launchRequests==2&&compact.IsVisible,"Ausgewählte Epic-Startoption sendet genau einen Auftrag vor dem lokalen Routengang");
+                Assert(launchRequests==2&&compact.IsVisible&&compact.Topmost,"Ausgewählte Epic-Startoption sendet genau einen Auftrag und öffnet angeheftetes Routenfenster");
                 Assert(((TextBlock)compact.FindName("EpicStatus")).Text.StartsWith("Epic-Start angefragt"),"Kompaktfenster bestätigt nur den Startauftrag und behauptet kein laufendes Spiel");
                 Assert(Descendants(compact).OfType<TextBlock>().Any(t=>t.Text.Contains("Leave-Zeitpunkt unbekannt")),"Fehlende Truhenerkennung und Leave-Zeit sichtbar ohne erfundene Empfehlung");
                 Click(compact,"Beenden");Click(compact,"Zur Planung");launchOption.IsChecked=false;
@@ -165,7 +170,9 @@ public static class Program
                     Assert(((TextBlock)window.FindName("FanNotice")).Visibility==Visibility.Visible,"Epic-Fan-Content-Hinweis sichtbar");
                     await Capture(window,"planner.png");
                     Click(window,"Kompakt");await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
-                    compact=app.Windows.OfType<CompactWindow>().Single();await Capture(compact,"compact.png");Click(compact,"Zur Planung");
+                    compact=app.Windows.OfType<CompactWindow>().Single();
+                    Assert(!compact.Topmost,"Reine Kompaktvorschau ohne Sitzung heftet sich nicht automatisch an");
+                    await Capture(compact,"compact.png");Click(compact,"Zur Planung");
                 }
                 if(Environment.GetEnvironmentVariable("ROUTE_VERIFY_FORTNITE_GG")=="1")
                 {
@@ -267,5 +274,32 @@ public static class Program
         foreach(string type in new[]{"mousePressed","mouseReleased"})
             await browser.CallDevToolsProtocolMethodAsync("Input.dispatchMouseEvent",JsonSerializer.Serialize(new {type,x,y,button="left",clickCount=1}));
         await Task.Delay(250);
+    }
+    private static async Task VerifyDesktopVisibility(CompactWindow compact)
+    {
+        var cover=new Window {Style=null,Title="Neutrales Testfenster · keine Fortnite-Partie",WindowStyle=WindowStyle.None,
+            WindowState=WindowState.Maximized,ResizeMode=ResizeMode.NoResize,Background=new SolidColorBrush(Color.FromRgb(69,69,69)),ShowInTaskbar=false};
+        try
+        {
+            cover.Show();cover.Activate();await Dispatcher.Yield(DispatcherPriority.ApplicationIdle);
+            Assert(cover.IsActive&&!compact.IsActive&&compact.Topmost,"Routenfenster bleibt angeheftet, während neutrales Fenster aktiv ist");
+            string output=Path.GetFullPath("artifacts/ui-smoke/desktop-hud.png");Directory.CreateDirectory(Path.GetDirectoryName(output)!);
+            var start=new System.Diagnostics.ProcessStartInfo("pwsh") {UseShellExecute=false,CreateNoWindow=true};
+            foreach(string arg in new[]{"-NoProfile","-NonInteractive","-File",Path.GetFullPath("scripts/capture-test-desktop.ps1"),"-OutputPath",output})start.ArgumentList.Add(arg);
+            using var capture=System.Diagnostics.Process.Start(start)!;
+            await capture.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(30));
+            Assert(capture.ExitCode==0&&File.Exists(output),"Tatsächlicher Windows-Desktop statt Fenster-Render für Sichtbarkeitsprüfung aufgenommen");
+            var image=new BitmapImage();image.BeginInit();image.CacheOption=BitmapCacheOption.OnLoad;image.UriSource=new Uri(output);image.EndInit();
+            var pixels=new FormatConvertedBitmap(image,PixelFormats.Bgra32,null,0);
+            double sx=image.PixelWidth/SystemParameters.VirtualScreenWidth,sy=image.PixelHeight/SystemParameters.VirtualScreenHeight;
+            Color Pixel(double x,double y)
+            {
+                byte[] sample=new byte[4];pixels.CopyPixels(new Int32Rect((int)((x-SystemParameters.VirtualScreenLeft)*sx),(int)((y-SystemParameters.VirtualScreenTop)*sy),1,1),sample,4,0);
+                return Color.FromRgb(sample[2],sample[1],sample[0]);
+            }
+            Assert(Pixel(compact.Left+8,compact.Top+70)==Color.FromRgb(8,8,8),"Routenfenster ist im echten Desktopbild über aktivem neutralen Fenster sichtbar");
+            Assert(Pixel(SystemParameters.WorkArea.Left+30,SystemParameters.WorkArea.Top+100)==Color.FromRgb(69,69,69),"Neutrales Testfenster im Desktopbild bestätigt; kein verdeckter Hintergrundtest");
+        }
+        finally {cover.Close();}
     }
 }
